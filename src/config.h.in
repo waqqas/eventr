@@ -1,0 +1,3 @@
+#cmakedefine ENABLE_SBE_DEBUG
+#cmakedefine LOG_ACTIVE_LEVEL @LOG_TYPE@
+
