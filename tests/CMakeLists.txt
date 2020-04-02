@@ -18,8 +18,8 @@ add_executable(${PROJECT_NAME} ${sources})
 add_dependencies(${PROJECT_NAME} catch2)
 target_include_directories(${PROJECT_NAME} PUBLIC ${EXTERNALS_SOURCE_DIR}/catch2/include)
 
-add_dependencies(${PROJECT_NAME} eventer)
+add_dependencies(${PROJECT_NAME} eventr)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_BINARY_DIR}/src/)
 
-target_link_libraries(${PROJECT_NAME} eventer)
+target_link_libraries(${PROJECT_NAME} eventr)
