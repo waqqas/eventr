@@ -4,10 +4,10 @@
 #include <iostream>
 #include <lyra/lyra.hpp>
 
-void on_timer_expired(Eventr::rtc_timer *timer)
+void on_timer_expired(Eventr::rtc_timer &timer)
 {
   std::cout << "timer expired" << std::endl;
-  timer->stop();
+  timer.stop();
 }
 
 int main(int argc, char *argv[])
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
   Eventr::io_handler io(10);
   Eventr::rtc_timer  timer(io);
 
-  timer.set_cb(std::bind(on_timer_expired, &timer));
+  timer.set_cb(std::bind(on_timer_expired, std::ref(timer)));
   timer.expire_in(expiry);
 
   // timespec now;
