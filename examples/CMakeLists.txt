@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(packet_rx)
+project(timer1)
 
 file(GLOB sources *.cpp *.h)
 add_executable(${PROJECT_NAME} ${sources})
