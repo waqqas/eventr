@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(eventer_project)
+project(eventr_project)
 
 set(CMAKE_CXX_STANDARD 17)
 
