@@ -24,29 +24,23 @@ public:
     cb = callback;
   }
 
-  void expire_at(const itimerspec &new_value)
+  void expire_at(const time_t &expiry_epoch)
   {
-    if (::timerfd_settime(fd, TFD_TIMER_ABSTIME, &new_value, NULL) == -1)
-    {
-      throw std::runtime_error(::strerror(errno));
-    }
+    expiry.it_interval      = {0, 0};
+    expiry.it_value.tv_sec  = expiry_epoch;
+    expiry.it_value.tv_nsec = 0;
   }
 
   void expire_in(const time_t &expiry_sec)
   {
-    timespec now;
+    ::clock_gettime(CLOCK_REALTIME, &expiry.it_value);
 
-    ::clock_gettime(CLOCK_REALTIME, &now);
-
-    expiry.it_interval      = {0, 0};
-    expiry.it_value.tv_sec  = now.tv_sec + expiry_sec;
-    expiry.it_value.tv_nsec = now.tv_nsec;
+    expiry.it_interval = {0, 0};
+    expiry.it_value.tv_sec += expiry_sec;
   }
 
   void start()
   {
-    std::cout << "expiry: " << expiry.it_value.tv_sec << ":" << expiry.it_value.tv_nsec
-              << std::endl;
     if (::timerfd_settime(fd, TFD_TIMER_ABSTIME, &expiry, NULL) == -1)
     {
       throw std::runtime_error(::strerror(errno));
@@ -66,7 +60,6 @@ public:
 
   ~rtc_timer()
   {
-    stop();
     ::close(fd);
   }
 

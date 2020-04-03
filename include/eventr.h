@@ -3,7 +3,6 @@
 
 #include <cerrno>
 #include <functional>
-#include <iostream>
 #include <list>
 #include <stdexcept>
 #include <string.h>
@@ -30,7 +29,7 @@ private:
   using epoll_list_data_size = epoll_list_type::size_type;
 
 public:
-  io_handler(event_data_size_type data_size = 0, epoll_list_data_size epoll_size = 0)
+  io_handler(epoll_list_data_size epoll_size = 0, event_data_size_type data_size = 0)
     : event_list(data_size)
     , epoll_list(epoll_size)
   {
@@ -60,8 +59,7 @@ public:
 
   void remove(int fd)
   {
-    std::remove_if(event_list.begin(), event_list.end(),
-                   [&fd](event_data &ed) { return (ed.fd == fd); });
+    event_list.remove_if([&fd](const event_data &ed) { return (ed.fd == fd); });
 
     if (::epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1)
     {
@@ -73,11 +71,9 @@ public:
   {
     while (!event_list.empty())
     {
-      int event_count = ::epoll_wait(epoll_fd, &epoll_list[0], epoll_list.max_size(), -1);
+      int event_count = ::epoll_wait(epoll_fd, &epoll_list[0], epoll_list.size(), -1);
       for (int count = 0; count < event_count; count++)
       {
-        std::cout << "event:" << count << std::endl;
-
         event_data *data = (event_data *)epoll_list[count].data.ptr;
         data->cb();
       }
