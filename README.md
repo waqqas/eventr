@@ -2,6 +2,12 @@ Introduction
 ---
 
 
+Downloading
+---
+
+- git checkout https://github.com/waqqas/eventr.git
+- git submodule update --init
+
 Building
 ---
 
@@ -10,13 +16,3 @@ Building
 - cmake ..
 - make
 
-Sample Output
----
-```
-```
-
-References
----
-
-- 
-- 
