@@ -1,20 +1,26 @@
 #include "fd_reader.h"
 
 #include <iostream>
-#include <lyra/lyra.hpp>
+#include <string>
 
-void on_read(Eventr::fd_reader &reader)
+void on_read(Eventr::fd_reader<1024> &reader, Eventr::fd_reader<1024>::buffer_type buffer,
+             size_t size)
 {
-  std::cout << "read : " << std::endl;
-  reader.stop();
+  static int  count = 5;
+  std::string data(buffer.data(), size);
+  std::cout << "read : " << data << std::endl;
+  if (count-- == 0)
+  {
+    reader.stop();
+  }
 }
 
 int main(void)
 {
-  Eventr::io_handler  io(10);
-  Eventr::fd_reader reader(io, STDIN_FILENO);
+  Eventr::io_handler      io(10);
+  Eventr::fd_reader<1024> reader(io, STDIN_FILENO);
 
-  reader.set_cb(std::bind(on_read, std::ref(reader)));
+  reader.set_cb(std::bind(on_read, std::ref(reader), std::placeholders::_1, std::placeholders::_2));
   reader.start();
 
   io.run();
