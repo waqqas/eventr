@@ -31,10 +31,7 @@ public:
     expiry.it_value.tv_sec  = expiry_epoch;
     expiry.it_value.tv_nsec = 0;
 
-    if (::timerfd_settime(fd, TFD_TIMER_ABSTIME, &expiry, NULL) == -1)
-    {
-      throw std::runtime_error(::strerror(errno));
-    }
+    expire(expiry);
   }
 
   void expire_in(const time_t &expiry_sec)
@@ -45,25 +42,17 @@ public:
     expiry.it_interval = {0, 0};
     expiry.it_value.tv_sec += expiry_sec;
 
-    if (::timerfd_settime(fd, TFD_TIMER_ABSTIME, &expiry, NULL) == -1)
-    {
-      throw std::runtime_error(::strerror(errno));
-    }
+    expire(expiry);
   }
 
   void start()
   {
-    io.add(fd, std::bind(&rtc_timer::on_expiry, this));
+    io.add(fd, std::bind(&rtc_timer::on_expiry, this), std::bind(&rtc_timer::on_error, this));
   }
 
   void stop()
   {
     io.remove(fd);
-  }
-
-  void on_expiry()
-  {
-    cb();
   }
 
   ~rtc_timer()
@@ -72,8 +61,28 @@ public:
   }
 
 private:
-  int         fd;
+  void on_expiry()
+  {
+    cb();
+  }
+
+  void on_error()
+  {
+    io.remove(fd);
+    ::close(fd);
+  }
+
+  void expire(const itimerspec &expiry)
+  {
+    if (::timerfd_settime(fd, TFD_TIMER_ABSTIME, &expiry, NULL) == -1)
+    {
+      throw std::runtime_error(::strerror(errno));
+    }
+  }
+
+private:
   io_handler &io;
+  int         fd;
   timer_cb    cb;
 };
 }  // namespace Eventr
