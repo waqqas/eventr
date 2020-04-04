@@ -26,25 +26,33 @@ public:
 
   void expire_at(const time_t &expiry_epoch)
   {
+    itimerspec expiry;
     expiry.it_interval      = {0, 0};
     expiry.it_value.tv_sec  = expiry_epoch;
     expiry.it_value.tv_nsec = 0;
-  }
 
-  void expire_in(const time_t &expiry_sec)
-  {
-    ::clock_gettime(CLOCK_REALTIME, &expiry.it_value);
-
-    expiry.it_interval = {0, 0};
-    expiry.it_value.tv_sec += expiry_sec;
-  }
-
-  void start()
-  {
     if (::timerfd_settime(fd, TFD_TIMER_ABSTIME, &expiry, NULL) == -1)
     {
       throw std::runtime_error(::strerror(errno));
     }
+  }
+
+  void expire_in(const time_t &expiry_sec)
+  {
+    itimerspec expiry;
+    ::clock_gettime(CLOCK_REALTIME, &expiry.it_value);
+
+    expiry.it_interval = {0, 0};
+    expiry.it_value.tv_sec += expiry_sec;
+
+    if (::timerfd_settime(fd, TFD_TIMER_ABSTIME, &expiry, NULL) == -1)
+    {
+      throw std::runtime_error(::strerror(errno));
+    }
+  }
+
+  void start()
+  {
     io.add(fd, std::bind(&rtc_timer::on_expiry, this));
   }
 
@@ -67,7 +75,6 @@ private:
   int         fd;
   io_handler &io;
   timer_cb    cb;
-  itimerspec  expiry;
 };
 }  // namespace Eventr
 #endif

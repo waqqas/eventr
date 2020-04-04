@@ -4,15 +4,24 @@
 #include <iostream>
 #include <lyra/lyra.hpp>
 
-void on_timer_expired(Eventr::rtc_timer &timer)
+void on_timer_expired(Eventr::rtc_timer &timer, time_t expiry)
 {
-  std::cout << "timer expired" << std::endl;
-  timer.stop();
+  static int count = 5;
+  std::cout << "timer expired: " << count << std::endl;
+  if (count > 0)
+  {
+    count--;
+    timer.expire_in(expiry);
+  }
+  else
+  {
+    timer.stop();
+  }
 }
 
 int main(int argc, char *argv[])
 {
-  time_t expiry = 5;
+  time_t expiry = 1;
 
   auto cli =
       lyra::cli_parser() | lyra::opt(expiry, "expiry")["-e"]["--expiry"]("Expiry time in seconds?");
@@ -27,7 +36,7 @@ int main(int argc, char *argv[])
   Eventr::io_handler io(10);
   Eventr::rtc_timer  timer(io);
 
-  timer.set_cb(std::bind(on_timer_expired, std::ref(timer)));
+  timer.set_cb(std::bind(on_timer_expired, std::ref(timer), expiry));
   timer.expire_in(expiry);
 
   // timespec now;
