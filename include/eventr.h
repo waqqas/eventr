@@ -14,12 +14,14 @@ namespace Eventr {
 class io_handler
 {
 private:
-  using event_cb = std::function<void(void)>;
+  using event_success_cb_type = std::function<void(void)>;
+  using event_error_cb_type   = std::function<void(int)>;
 
   struct event_data
   {
-    int      fd;
-    event_cb cb;
+    int                   fd;
+    event_success_cb_type success_cb;
+    event_error_cb_type   error_cb;
   };
 
   using event_data_list_type = std::list<event_data>;
@@ -41,9 +43,9 @@ public:
     close();
   }
 
-  void add(int fd, const event_cb &cb)
+  void add(int fd, const event_success_cb_type &success_cb, const event_error_cb_type &error_cb)
   {
-    event_list.push_back({fd, cb});
+    event_list.push_back({fd, success_cb, error_cb});
 
     epoll_event ev;
 
@@ -75,7 +77,15 @@ public:
       for (int count = 0; count < event_count; count++)
       {
         event_data *data = (event_data *)epoll_list[count].data.ptr;
-        data->cb();
+
+        if ((epoll_list[count].events & EPOLLERR) || (epoll_list[count].events & EPOLLHUP) ||
+            (!(epoll_list[count].events & EPOLLIN)))
+        {
+          data->error_cb(errno);
+          continue;
+        }
+
+        data->success_cb();
       }
     }
   }

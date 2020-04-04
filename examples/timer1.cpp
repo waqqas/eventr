@@ -1,5 +1,4 @@
-#include "config.h"
-#include "timer.h"
+#include "rtc_timer.h"
 
 #include <iostream>
 #include <lyra/lyra.hpp>
