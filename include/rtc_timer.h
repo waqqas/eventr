@@ -1,17 +1,16 @@
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef RTC_TIMER_H
+#define RTC_TIMER_H
 
 #include "eventr.h"
 
 #include <functional>
-#include <iostream>
 #include <sys/timerfd.h>
 
 namespace Eventr {
 class rtc_timer
 {
 public:
-  using timer_cb = std::function<void(void)>;
+  using timer_cb_type = std::function<void(void)>;
 
   rtc_timer(io_handler &io)
     : io(io)
@@ -19,7 +18,7 @@ public:
     fd = ::timerfd_create(CLOCK_REALTIME, 0);
   }
 
-  void set_cb(const timer_cb &callback)
+  void set_cb(const timer_cb_type &callback)
   {
     cb = callback;
   }
@@ -83,7 +82,7 @@ private:
 private:
   io_handler &io;
   int         fd;
-  timer_cb    cb;
+  timer_cb_type    cb;
 };
 }  // namespace Eventr
 #endif
