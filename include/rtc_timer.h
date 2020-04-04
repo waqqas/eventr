@@ -1,5 +1,5 @@
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef RTC_TIMER_H
+#define RTC_TIMER_H
 
 #include "eventr.h"
 
