@@ -22,6 +22,7 @@ int main(void)
 
   receiver.set_cb(
       std::bind(on_receive, std::ref(receiver), std::placeholders::_1, std::placeholders::_2));
+  receiver.bind("0.0.0.0", 5000);
   receiver.start();
 
   io.run();
