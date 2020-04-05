@@ -3,6 +3,7 @@
 
 #include "eventr.h"
 
+#include <arpa/inet.h>
 #include <array>
 #include <fcntl.h>
 #include <netinet/in.h>
@@ -24,16 +25,16 @@ public:
     fd = ::socket(AF_INET, SOCK_DGRAM, 0);
 
     // make socket non-blocking
-    int flags = fcntl(fd, F_GETFL, 0);
-    if (flags == -1)
-    {
-      throw std::runtime_error(::strerror(errno));
-    }
-    flags |= O_NONBLOCK;
-    if (fcntl(fd, F_SETFL, flags) == 0)
-    {
-      throw std::runtime_error(::strerror(errno));
-    }
+    // int flags = fcntl(fd, F_GETFL, 0);
+    // if (flags == -1)
+    // {
+    //   throw std::runtime_error(::strerror(errno));
+    // }
+    // flags |= O_NONBLOCK;
+    // if (fcntl(fd, F_SETFL, flags) == 0)
+    // {
+    //   throw std::runtime_error(::strerror(errno));
+    // }
   }
 
   ~udp_receiver()
@@ -57,8 +58,17 @@ public:
     io.remove(fd);
   }
 
-  void bind(std::string ip, uint32_t port)
-  {}
+  void bind(const std::string &server_ip, uint32_t port)
+  {
+    sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port   = ::htons(port);
+    inet_aton(server_ip.c_str(), &server_addr.sin_addr);
+    if (::bind(fd, (sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+    {
+      throw std::runtime_error(::strerror(errno));
+    }
+  }
 
 private:
   void on_receive()
