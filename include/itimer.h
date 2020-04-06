@@ -4,6 +4,7 @@
 #include <functional>
 #include <sys/timerfd.h>
 
+namespace Eventr {
 class itimer
 {
 protected:
@@ -17,5 +18,6 @@ public:
   virtual ~itimer()
   {}
 };
+}  // namespace Eventr
 
 #endif
