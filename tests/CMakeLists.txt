@@ -4,7 +4,7 @@ project(tests)
 
 include(ExternalProject)
 ExternalProject_Add(catch2 
-    URL https://github.com/catchorg/Catch2/releases/download/v2.11.1/catch.hpp
+    URL https://github.com/catchorg/Catch2/releases/download/v2.11.3/catch.hpp
     DOWNLOAD_DIR ${EXTERNALS_SOURCE_DIR}/catch2/include
     DOWNLOAD_NO_EXTRACT 1
     CONFIGURE_COMMAND ""
