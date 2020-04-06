@@ -23,9 +23,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${VENDOR_SOURCE_DIR}/Lyra/incl
 
 target_link_libraries(${PROJECT_NAME} eventr)
 
-project(udp_receiver1)
+project(udp_echo1)
 
-file(GLOB sources udp_receiver1.cpp)
+file(GLOB sources udp_echo1.cpp)
 add_executable(${PROJECT_NAME} ${sources})
 
 add_dependencies(${PROJECT_NAME} eventr)
