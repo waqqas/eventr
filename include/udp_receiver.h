@@ -17,8 +17,9 @@ template <size_t SIZE>
 class udp_receiver
 {
 public:
-  using buffer_type     = std::array<char, SIZE>;
-  using receive_cb_type = std::function<void(const buffer_type &, size_t)>;
+  using buffer_type = std::array<char, SIZE>;
+  using receive_cb_type =
+      std::function<void(const buffer_type &, const size_t &, const sockaddr_in &)>;
   udp_receiver(io_handler &io)
     : io(io)
   {
@@ -58,7 +59,7 @@ public:
     io.remove(fd);
   }
 
-  void bind(const std::string &server_ip, uint32_t port)
+  void bind(const std::string &server_ip, const uint32_t &port)
   {
     sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
@@ -68,6 +69,30 @@ public:
     {
       throw std::runtime_error(::strerror(errno));
     }
+  }
+
+  template <size_t S>
+  void send(const std::array<char, S> &payload, const size_t &size, const sockaddr_in &remote_addr)
+  {
+    socklen_t addr_length = sizeof(remote_addr);
+
+    if (::sendto(fd, payload.data(), size, MSG_DONTWAIT, (sockaddr *)&remote_addr, addr_length) <
+        0)
+    {
+      throw std::runtime_error(::strerror(errno));
+    }
+  }
+
+  template <size_t S>
+  void send(const std::array<char, S>& payload, const size_t& size, const std::string &to_ip,
+            const uint32_t &to_port)
+  {
+    sockaddr_in remote_addr;
+    remote_addr.sin_family = AF_INET;
+    remote_addr.sin_port   = ::htons(to_port);
+    inet_aton(to_ip.c_str(), &remote_addr.sin_addr);
+
+    send(payload, size, remote_addr);
   }
 
 private:
@@ -80,7 +105,7 @@ private:
         ::recvfrom(fd, recv_buffer.data(), SIZE, 0, (sockaddr *)&addr, &add_len);
     if (bytes_received > 0)
     {
-      cb(recv_buffer, bytes_received);
+      cb(recv_buffer, bytes_received, addr);
     }
   }
 
