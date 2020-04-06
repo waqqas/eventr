@@ -2,23 +2,20 @@
 #define RTC_TIMER_H
 
 #include "eventr.h"
-
-#include <functional>
-#include <sys/timerfd.h>
+#include "itimer.h"
 
 namespace Eventr {
-class rtc_timer
+
+class rtc_timer : public itimer
 {
 public:
-  using timer_cb_type = std::function<void(void)>;
-
   rtc_timer(io_handler &io)
     : io(io)
   {
     fd = ::timerfd_create(CLOCK_REALTIME, 0);
   }
 
-  void set_cb(const timer_cb_type &callback)
+  void set_cb(const timer_cb_type &callback) override
   {
     cb = callback;
   }
@@ -33,7 +30,7 @@ public:
     expire(expiry);
   }
 
-  void expire_in(const time_t &expiry_sec)
+  void expire_in(const time_t &expiry_sec) override
   {
     itimerspec expiry;
     ::clock_gettime(CLOCK_REALTIME, &expiry.it_value);
@@ -44,12 +41,12 @@ public:
     expire(expiry);
   }
 
-  void start()
+  void start() override
   {
     io.add(fd, std::bind(&rtc_timer::on_expiry, this), std::bind(&rtc_timer::on_error, this));
   }
 
-  void stop()
+  void stop() override
   {
     io.remove(fd);
   }
@@ -80,9 +77,9 @@ private:
   }
 
 private:
-  io_handler &io;
-  int         fd;
-  timer_cb_type    cb;
+  io_handler &  io;
+  int           fd;
+  timer_cb_type cb;
 };
 }  // namespace Eventr
 #endif
