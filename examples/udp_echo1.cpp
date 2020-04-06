@@ -1,9 +1,9 @@
-#include "udp_receiver.h"
+#include "udp_socket.h"
 
 #include <iostream>
 #include <lyra/lyra.hpp>
 
-using receiver_type = Eventr::udp_receiver<2048>;
+using receiver_type = Eventr::udp_socket<2048>;
 
 void on_receive(receiver_type &receiver, const receiver_type::buffer_type buffer,
                 const size_t &size, const sockaddr_in &remote_addr)
@@ -12,7 +12,14 @@ void on_receive(receiver_type &receiver, const receiver_type::buffer_type buffer
   std::string data(buffer.data(), size);
   std::cout << "read : " << data << std::endl;
 
-  receiver.send(buffer, size, remote_addr);
+  try
+  {
+    receiver.send(buffer, size, remote_addr);
+  }
+  catch (std::exception &e)
+  {
+    std::cout << "exception: " << e.what() << std::endl;
+  }
 
   if (count-- == 0)
   {
@@ -37,12 +44,19 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  receiver.set_cb(std::bind(on_receive, std::ref(receiver), std::placeholders::_1,
-                            std::placeholders::_2, std::placeholders::_3));
-  receiver.bind(ip, port);
-  receiver.start();
+  try
+  {
+    receiver.set_cb(std::bind(on_receive, std::ref(receiver), std::placeholders::_1,
+                              std::placeholders::_2, std::placeholders::_3));
+    receiver.bind(ip, port);
+    receiver.start();
 
-  io.run();
+    io.run();
+  }
+  catch (std::exception &e)
+  {
+    std::cout << "exception: " << e.what() << std::endl;
+  }
 
   return 0;
 }

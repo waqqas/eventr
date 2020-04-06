@@ -14,31 +14,31 @@
 
 namespace Eventr {
 template <size_t SIZE>
-class udp_receiver
+class udp_socket
 {
 public:
   using buffer_type = std::array<char, SIZE>;
   using receive_cb_type =
       std::function<void(const buffer_type &, const size_t &, const sockaddr_in &)>;
-  udp_receiver(io_handler &io)
+  udp_socket(io_handler &io)
     : io(io)
   {
     fd = ::socket(AF_INET, SOCK_DGRAM, 0);
 
     // make socket non-blocking
-    // int flags = fcntl(fd, F_GETFL, 0);
-    // if (flags == -1)
-    // {
-    //   throw std::runtime_error(::strerror(errno));
-    // }
-    // flags |= O_NONBLOCK;
-    // if (fcntl(fd, F_SETFL, flags) == 0)
-    // {
-    //   throw std::runtime_error(::strerror(errno));
-    // }
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags == -1)
+    {
+      throw std::runtime_error(::strerror(errno));
+    }
+    flags |= O_NONBLOCK;
+    if (fcntl(fd, F_SETFL, flags) == -1)
+    {
+      throw std::runtime_error(::strerror(errno));
+    }
   }
 
-  ~udp_receiver()
+  ~udp_socket()
   {
     ::close(fd);
   }
@@ -50,8 +50,8 @@ public:
 
   void start()
   {
-    io.add(fd, std::bind(&udp_receiver<SIZE>::on_receive, this),
-           std::bind(&udp_receiver<SIZE>::on_error, this));
+    io.add(fd, std::bind(&udp_socket<SIZE>::on_receive, this),
+           std::bind(&udp_socket<SIZE>::on_error, this));
   }
 
   void stop()
@@ -76,15 +76,14 @@ public:
   {
     socklen_t addr_length = sizeof(remote_addr);
 
-    if (::sendto(fd, payload.data(), size, MSG_DONTWAIT, (sockaddr *)&remote_addr, addr_length) <
-        0)
+    if (::sendto(fd, payload.data(), size, 0, (sockaddr *)&remote_addr, addr_length) < 0)
     {
       throw std::runtime_error(::strerror(errno));
     }
   }
 
   template <size_t S>
-  void send(const std::array<char, S>& payload, const size_t& size, const std::string &to_ip,
+  void send(const std::array<char, S> &payload, const size_t &size, const std::string &to_ip,
             const uint32_t &to_port)
   {
     sockaddr_in remote_addr;
