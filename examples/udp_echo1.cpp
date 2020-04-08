@@ -14,7 +14,7 @@ void on_receive(receiver_type &receiver, const receiver_type::buffer_type buffer
 
   try
   {
-    receiver.send(buffer, size, remote_addr);
+    receiver.send(buffer.data(), size, remote_addr);
   }
   catch (std::exception &e)
   {

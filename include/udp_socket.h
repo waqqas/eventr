@@ -2,24 +2,22 @@
 #define UDP_RECEIVER_H
 
 #include "eventr.h"
+#include "isocket.h"
 
 #include <arpa/inet.h>
-#include <array>
 #include <fcntl.h>
-#include <netinet/in.h>
-#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 namespace Eventr {
 template <size_t SIZE>
-class udp_socket
+class udp_socket : public isocket<SIZE>
 {
 public:
-  using buffer_type = std::array<char, SIZE>;
-  using receive_cb_type =
-      std::function<void(const buffer_type &, const size_t &, const sockaddr_in &)>;
+  using buffer_type     = typename isocket<SIZE>::buffer_type;
+  using receive_cb_type = typename isocket<SIZE>::receive_cb_type;
+
   udp_socket(io_handler &io)
     : io(io)
   {
@@ -71,19 +69,17 @@ public:
     }
   }
 
-  template <size_t S>
-  void send(const std::array<char, S> &payload, const size_t &size, const sockaddr_in &remote_addr)
+  void send(const char* payload, const size_t &size, const sockaddr_in &remote_addr)
   {
     socklen_t addr_length = sizeof(remote_addr);
 
-    if (::sendto(fd, payload.data(), size, 0, (sockaddr *)&remote_addr, addr_length) < 0)
+    if (::sendto(fd, payload, size, 0, (sockaddr *)&remote_addr, addr_length) < 0)
     {
       throw std::runtime_error(::strerror(errno));
     }
   }
 
-  template <size_t S>
-  void send(const std::array<char, S> &payload, const size_t &size, const std::string &to_ip,
+  void send(const char* payload, const size_t &size, const std::string &to_ip,
             const uint32_t &to_port)
   {
     sockaddr_in remote_addr;
