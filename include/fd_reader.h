@@ -2,35 +2,34 @@
 #define fd_reader_H
 
 #include "eventr.h"
-
-#include <array>
-#include <functional>
+#include "ireader.h"
 
 namespace Eventr {
 template <size_t SIZE>
-class fd_reader
+class fd_reader : public ireader<SIZE>
 {
+
 public:
-  using buffer_type  = std::array<char, SIZE>;
-  using read_cb_type = std::function<void(const buffer_type&, size_t)>;
+  using read_cb_type = typename ireader<SIZE>::read_cb_type;
+  using buffer_type  = typename ireader<SIZE>::buffer_type;
 
   fd_reader(io_handler &io, int fd)
     : io(io)
     , fd(fd)
   {}
 
-  void set_cb(const read_cb_type &callback)
+  void set_cb(const read_cb_type &callback) override
   {
     cb = callback;
   }
 
-  void start()
+  void start() override
   {
     io.add(fd, std::bind(&fd_reader<SIZE>::on_read, this),
            std::bind(&fd_reader<SIZE>::on_error, this));
   }
 
-  void stop()
+  void stop() override
   {
     io.remove(fd);
   }
