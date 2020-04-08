@@ -6,7 +6,7 @@
 #include <string>
 
 using reader_type = Eventr::fd_reader<1024>;
-void on_read(reader_type &reader, reader_type::buffer_type buffer, size_t size)
+void on_read(reader_type &reader, reader_type::buffer_type buffer, const size_t &size)
 {
   static int  count = 5;
   std::string data(buffer.data(), size);

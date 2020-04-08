@@ -7,10 +7,9 @@
 namespace Eventr {
 class itimer
 {
-protected:
+public:
   using timer_cb_type = std::function<void(void)>;
 
-public:
   virtual void start()                               = 0;
   virtual void stop()                                = 0;
   virtual void expire_in(const time_t &expiry_sec)   = 0;
