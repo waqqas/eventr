@@ -4,19 +4,20 @@
 #include <lyra/lyra.hpp>
 #include <string>
 
-using socket_type = Eventr::tcp_comm_socket<2048>;
+using comm_socket_type = Eventr::tcp_comm_socket<2048>;
 
-void on_connect(socket_type &client)
+void on_connect(comm_socket_type &client)
 {
   std::cout << "client connected" << std::endl;
   client.send("hello", sizeof("hello"));
 }
 
-void on_receive(socket_type &client, const socket_type::buffer_type buffer, const size_t &size)
+void on_receive(comm_socket_type &client, const comm_socket_type::buffer_type &buffer,
+                const size_t &size)
 {
   static int  count = 5;
   std::string data(buffer.data(), size);
-  std::cout << "read : " << data << std::endl;
+  std::cout << "received : " << data << std::endl;
 
   //   try
   //   {
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
   }
 
   Eventr::io_handler io(10);
-  socket_type        client(io);
+  comm_socket_type   client(io);
 
   client.set_on_connect(std::bind(on_connect, std::ref(client)));
   client.set_on_receive(

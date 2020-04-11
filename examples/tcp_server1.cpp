@@ -9,33 +9,30 @@
 using sever_socket_type = Eventr::tcp_server_socket<2048>;
 using comm_socket_type  = typename sever_socket_type::comm_socket_type;
 
-void on_accept(sever_socket_type &server, const comm_socket_type &comm_socket)
+void on_receive(comm_socket_type &comm_socket, const comm_socket_type::buffer_type &buffer,
+                const size_t &size)
 {
-  UNUSED(server);
-  UNUSED(comm_socket);
+  static int  count = 5;
+  std::string data(buffer.data(), size);
+  std::cout << "received : " << data << std::endl;
+
+  // eacho back what is received
+  comm_socket.send(buffer.data(), size);
+
+  if (count-- == 0)
+  {
+    comm_socket.stop();
+  }
 }
 
-// void on_receive(sever_socket_type &                  server,
-//                 const Eventr::tcp_server_socket::buffer_type buffer, const size_t &size)
-// {
-//   static int  count = 5;
-//   std::string data(buffer.data(), size);
-//   std::cout << "read : " << data << std::endl;
+void on_accept(sever_socket_type &server, comm_socket_type &comm_socket)
+{
+  UNUSED(server);
+  std::cout << "New client connected" << std::endl;
 
-//   //   try
-//   //   {
-//   //     server.send(buffer.data(), size);
-//   //   }
-//   //   catch (std::exception &e)
-//   //   {
-//   //     std::cout << "exception: " << e.what() << std::endl;
-//   //   }
-
-//   if (count-- == 0)
-//   {
-//     server.stop();
-//   }
-// }
+  comm_socket.set_on_receive(
+      std::bind(on_receive, std::ref(comm_socket), std::placeholders::_1, std::placeholders::_2));
+}
 
 int main(int argc, char *argv[])
 {
@@ -59,8 +56,6 @@ int main(int argc, char *argv[])
   server.bind("0.0.0.0", server_port);
   server.listen();
   server.set_on_accept(std::bind(on_accept, std::ref(server), std::placeholders::_1));
-  //   server.set_on_receive(
-  //       std::bind(on_receive, std::ref(server), std::placeholders::_1, std::placeholders::_2));
 
   io.run();
 

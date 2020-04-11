@@ -18,12 +18,17 @@ class tcp_server_socket
 {
 public:
   using comm_socket_type = tcp_comm_socket<SIZE>;
-  using accept_cb_type   = std::function<void(const comm_socket_type &)>;
+  using accept_cb_type   = std::function<void(comm_socket_type &)>;
 
   tcp_server_socket(io_handler &io)
     : io(io)
   {
     fd = ::socket(AF_INET, SOCK_STREAM, 0);
+
+    if (fd == -1)
+    {
+      throw std::runtime_error(::strerror(errno));
+    }
 
     // make socket non-blocking
     int flags = fcntl(fd, F_GETFL, 0);
@@ -94,17 +99,24 @@ private:
       throw std::runtime_error(::strerror(errno));
     }
 
+    comm_socket_type comm_socket(io, fd);
+    comm_socket.mark_as_connected();  // already connected
+
+    // accept_cb(comm_socket);
+
     typename comm_list_type::iterator it;
     bool                              inserted = false;
-    comm_socket_type                  comm_socket(io, fd);
-    comm_socket.connected();
-
-    std::tie(it, inserted) = comm_list.emplace(fd, comm_socket);
+    std::tie(it, inserted)                     = comm_list.emplace(fd, comm_socket);
 
     if (inserted == true)
     {
       accept_cb(it->second);
     }
+  }
+
+  void stop_comm_socket(const comm_socket_type &comm_socket)
+  {
+    comm_list.find(comm_socket.fd);
   }
 
   void on_error()

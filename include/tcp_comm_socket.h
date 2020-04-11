@@ -14,10 +14,12 @@ namespace Eventr {
 template <size_t SIZE>
 class tcp_comm_socket
 {
+// friend class tcp_server_socket<SIZE>;
+
 public:
-  using buffer_type      = typename itcp_socket<SIZE>::buffer_type;
-  using receive_cb_type  = typename itcp_socket<SIZE>::receive_cb_type;
-  using connect_cb_type  = typename itcp_socket<SIZE>::connect_cb_type;
+  using buffer_type     = typename itcp_socket<SIZE>::buffer_type;
+  using receive_cb_type = typename itcp_socket<SIZE>::receive_cb_type;
+  using connect_cb_type = typename itcp_socket<SIZE>::connect_cb_type;
 
   tcp_comm_socket(io_handler &io, int fd = -1)
     : io(io)
@@ -102,7 +104,7 @@ public:
     receive_cb = cb;
   }
 
-  void connected()
+  void mark_as_connected()
   {
     // change connect callback with receive callback
     io.add(fd, std::bind(&tcp_comm_socket<SIZE>::on_receive, this),
@@ -126,7 +128,7 @@ private:
 
   void on_connect()
   {
-    connected();
+    mark_as_connected();
     connect_cb();
   }
 
