@@ -2,7 +2,7 @@
 #define UDP_RECEIVER_H
 
 #include "eventr.h"
-#include "isocket.h"
+#include "iudp_socket.h"
 
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -12,11 +12,11 @@
 
 namespace Eventr {
 template <size_t SIZE>
-class udp_socket : public isocket<SIZE>
+class udp_socket : public iudp_socket<SIZE>
 {
 public:
-  using buffer_type     = typename isocket<SIZE>::buffer_type;
-  using receive_cb_type = typename isocket<SIZE>::receive_cb_type;
+  using buffer_type     = typename iudp_socket<SIZE>::buffer_type;
+  using receive_cb_type = typename iudp_socket<SIZE>::receive_cb_type;
 
   udp_socket(io_handler &io)
     : io(io)
@@ -69,7 +69,7 @@ public:
     }
   }
 
-  void send(const char* payload, const size_t &size, const sockaddr_in &remote_addr)
+  void send(const char *payload, const size_t &size, const sockaddr_in &remote_addr)
   {
     socklen_t addr_length = sizeof(remote_addr);
 
@@ -79,7 +79,7 @@ public:
     }
   }
 
-  void send(const char* payload, const size_t &size, const std::string &to_ip,
+  void send(const char *payload, const size_t &size, const std::string &to_ip,
             const uint32_t &to_port)
   {
     sockaddr_in remote_addr;

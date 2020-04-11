@@ -3,11 +3,12 @@
 
 #include <cerrno>
 #include <functional>
-#include <list>
 #include <stdexcept>
 #include <string.h>
 #include <sys/epoll.h>
+#include <tuple>
 #include <unistd.h>
+#include <unordered_map>
 
 namespace Eventr {
 
@@ -24,7 +25,7 @@ private:
     event_error_cb_type   error_cb;
   };
 
-  using event_data_list_type = std::list<event_data>;
+  using event_data_list_type = std::unordered_map<int, event_data>;
   using event_data_size_type = event_data_list_type::size_type;
 
   using epoll_list_type      = std::vector<epoll_event>;
@@ -45,23 +46,29 @@ public:
 
   void add(int fd, const event_success_cb_type &success_cb, const event_error_cb_type &error_cb)
   {
-    event_list.push_back({fd, success_cb, error_cb});
+    event_data_list_type::iterator it;
+    bool                           inserted = false;
 
-    epoll_event ev;
+    std::tie(it, inserted) = event_list.emplace(fd, event_data{fd, success_cb, error_cb});
 
-    ev.data.ptr = &event_list.back();
-    ev.events   = EPOLLIN | EPOLLET;
-
-    if (::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1)
+    if (inserted == true)
     {
-      event_list.pop_back();
-      throw std::runtime_error(::strerror(errno));
+      epoll_event ev;
+
+      ev.data.ptr = &(it->second);
+      ev.events   = EPOLLIN | EPOLLET;
+
+      if (::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1)
+      {
+        event_list.erase(it);
+        throw std::runtime_error(::strerror(errno));
+      }
     }
   }
 
   void remove(int fd)
   {
-    event_list.remove_if([&fd](const event_data &ed) { return (ed.fd == fd); });
+    event_list.erase(fd);
 
     if (::epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1)
     {
@@ -69,24 +76,29 @@ public:
     }
   }
 
-  void run(void)
+  void run()
   {
     while (!event_list.empty())
     {
-      int event_count = ::epoll_wait(epoll_fd, &epoll_list[0], epoll_list.size(), -1);
-      for (int count = 0; count < event_count; count++)
+      poll();
+    }
+  }
+
+  void poll()
+  {
+    int event_count = ::epoll_wait(epoll_fd, &epoll_list[0], epoll_list.size(), -1);
+    for (int count = 0; count < event_count; count++)
+    {
+      event_data *data = (event_data *)epoll_list[count].data.ptr;
+
+      if ((epoll_list[count].events & EPOLLERR) || (epoll_list[count].events & EPOLLHUP) ||
+          (!(epoll_list[count].events & EPOLLIN)))
       {
-        event_data *data = (event_data *)epoll_list[count].data.ptr;
-
-        if ((epoll_list[count].events & EPOLLERR) || (epoll_list[count].events & EPOLLHUP) ||
-            (!(epoll_list[count].events & EPOLLIN)))
-        {
-          data->error_cb(errno);
-          continue;
-        }
-
-        data->success_cb();
+        data->error_cb(errno);
+        continue;
       }
+
+      data->success_cb();
     }
   }
 
