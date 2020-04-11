@@ -34,6 +34,14 @@ public:
     io.remove(fd);
   }
 
+  void flush()
+  {
+    if (::fsync(fd) < 0)
+    {
+      throw std::runtime_error(::strerror(errno));
+    }
+  }
+
 private:
   void on_read()
   {
