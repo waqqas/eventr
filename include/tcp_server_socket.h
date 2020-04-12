@@ -6,6 +6,7 @@
 
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <memory>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -99,25 +100,28 @@ private:
       throw std::runtime_error(::strerror(errno));
     }
 
-    comm_socket_type comm_socket(io, fd);
-    comm_socket.mark_as_connected();  // already connected
-
+    // std::shared_ptr<comm_socket_type> comm_socket = std::make_shared<comm_socket_type>(io, fd);
+    // comm_socket->mark_as_connected();  // already connected
     // accept_cb(comm_socket);
+
+    comm_socket_type comm_socket(io, fd);
+    comm_socket.mark_as_connected();
 
     typename comm_list_type::iterator it;
     bool                              inserted = false;
-    std::tie(it, inserted)                     = comm_list.emplace(fd, comm_socket);
+    std::tie(it, inserted)                     = comm_list.emplace(fd, std::move(comm_socket));
 
     if (inserted == true)
     {
+      std::cout << "new client: " << it->second << std::endl;
       accept_cb(it->second);
     }
   }
 
-  void stop_comm_socket(const comm_socket_type &comm_socket)
-  {
-    comm_list.find(comm_socket.fd);
-  }
+  // void stop_comm_socket(const comm_socket_type &comm_socket)
+  // {
+  //   comm_list.find(comm_socket.fd);
+  // }
 
   void on_error()
   {

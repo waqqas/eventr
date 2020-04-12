@@ -12,7 +12,7 @@ class itcp_socket
 {
 public:
   using buffer_type     = std::array<char, SIZE>;
-  using receive_cb_type = std::function<void(const buffer_type &, const size_t &)>;
+  using receive_cb_type = std::function<void(const buffer_type &, const ssize_t &)>;
   using connect_cb_type = std::function<void(void)>;
 
   virtual void start()                            = 0;

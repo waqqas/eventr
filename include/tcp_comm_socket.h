@@ -6,6 +6,7 @@
 
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <iostream>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -14,8 +15,6 @@ namespace Eventr {
 template <size_t SIZE>
 class tcp_comm_socket
 {
-// friend class tcp_server_socket<SIZE>;
-
 public:
   using buffer_type     = typename itcp_socket<SIZE>::buffer_type;
   using receive_cb_type = typename itcp_socket<SIZE>::receive_cb_type;
@@ -34,6 +33,8 @@ public:
       throw std::runtime_error(::strerror(errno));
     }
 
+    std::cout << "COMM opened: " << fd << std::endl;
+
     // make socket non-blocking
     int flags = fcntl(fd, F_GETFL, 0);
     if (flags == -1)
@@ -47,14 +48,47 @@ public:
     }
   }
 
+  // non-copyable
+  tcp_comm_socket(tcp_comm_socket &other) = delete;
+  tcp_comm_socket &operator=(tcp_comm_socket &other) = delete;
+
+  // only moveable
+  tcp_comm_socket(tcp_comm_socket &&other)
+    : io(other.io)
+    , fd(other.fd)
+  {
+    other.fd = -1;
+  }
+
+  tcp_comm_socket &operator=(tcp_comm_socket &&other)
+  {
+    if (this != &other)
+    {
+      io       = other.io;
+      fd       = other.fd;
+      other.fd = -1;
+    }
+  }
+
   ~tcp_comm_socket()
   {
-    ::close(fd);
+    std::cout << "COMM closed: " << fd << std::endl;
+    if (fd > -1)
+    {
+      ::close(fd);
+    }
   }
 
   void start()
   {
     io.add(fd, std::bind(&tcp_comm_socket<SIZE>::on_connect, this),
+           std::bind(&tcp_comm_socket<SIZE>::on_error, this));
+  }
+
+  void mark_as_connected()
+  {
+    // change connect callback with receive callback
+    io.add(fd, std::bind(&tcp_comm_socket<SIZE>::on_receive, this),
            std::bind(&tcp_comm_socket<SIZE>::on_error, this));
   }
 
@@ -104,17 +138,17 @@ public:
     receive_cb = cb;
   }
 
-  void mark_as_connected()
+  friend std::ostream &operator<<(std::ostream &os, const tcp_comm_socket<SIZE> &socket)
   {
-    // change connect callback with receive callback
-    io.add(fd, std::bind(&tcp_comm_socket<SIZE>::on_receive, this),
-           std::bind(&tcp_comm_socket<SIZE>::on_error, this));
+    os << socket.fd;
+    return os;
   }
 
 private:
   void on_receive()
   {
-    size_t bytes_received = ::recv(fd, recv_buffer.data(), SIZE, 0);
+    ssize_t bytes_received = ::recv(fd, recv_buffer.data(), SIZE, 0);
+    std::cout << "receveied: (" << bytes_received << ") " << strerror(errno) << std::endl;
     if (bytes_received > 0)
     {
       receive_cb(recv_buffer, bytes_received);
@@ -139,5 +173,6 @@ private:
   connect_cb_type connect_cb;
   buffer_type     recv_buffer;
 };
+
 }  // namespace Eventr
 #endif

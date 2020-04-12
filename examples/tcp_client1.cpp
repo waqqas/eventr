@@ -13,7 +13,7 @@ void on_connect(comm_socket_type &client)
 }
 
 void on_receive(comm_socket_type &client, const comm_socket_type::buffer_type &buffer,
-                const size_t &size)
+                const ssize_t &size)
 {
   static int  count = 5;
   std::string data(buffer.data(), size);

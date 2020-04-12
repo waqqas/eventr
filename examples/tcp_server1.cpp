@@ -10,11 +10,11 @@ using sever_socket_type = Eventr::tcp_server_socket<2048>;
 using comm_socket_type  = typename sever_socket_type::comm_socket_type;
 
 void on_receive(comm_socket_type &comm_socket, const comm_socket_type::buffer_type &buffer,
-                const size_t &size)
+                const ssize_t &size)
 {
   static int  count = 5;
   std::string data(buffer.data(), size);
-  std::cout << "received : " << data << std::endl;
+  std::cout << "received : " << data << " on " << comm_socket << std::endl;
 
   // eacho back what is received
   comm_socket.send(buffer.data(), size);
@@ -28,7 +28,7 @@ void on_receive(comm_socket_type &comm_socket, const comm_socket_type::buffer_ty
 void on_accept(sever_socket_type &server, comm_socket_type &comm_socket)
 {
   UNUSED(server);
-  std::cout << "New client connected" << std::endl;
+  std::cout << "New client connected: " << comm_socket << std::endl;
 
   comm_socket.set_on_receive(
       std::bind(on_receive, std::ref(comm_socket), std::placeholders::_1, std::placeholders::_2));
@@ -36,12 +36,13 @@ void on_accept(sever_socket_type &server, comm_socket_type &comm_socket)
 
 int main(int argc, char *argv[])
 {
-  uint32_t server_port = 5000;
+  uint32_t    server_port = 5000;
   std::string server_ip   = "0.0.0.0";
 
-  auto cli =
-      lyra::cli_parser() | lyra::opt(server_port, "port")["-p"]["--port"]("TCP port to listen on") |
-      lyra::opt(server_ip, "ip")["-i"]["--ip"]("Local IP address");;
+  auto cli = lyra::cli_parser() |
+             lyra::opt(server_port, "port")["-p"]["--port"]("TCP port to listen on") |
+             lyra::opt(server_ip, "ip")["-i"]["--ip"]("Local IP address");
+  ;
 
   auto result = cli.parse({argc, argv});
   if (!result)
