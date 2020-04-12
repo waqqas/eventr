@@ -37,9 +37,11 @@ void on_accept(sever_socket_type &server, comm_socket_type &comm_socket)
 int main(int argc, char *argv[])
 {
   uint32_t server_port = 5000;
+  std::string server_ip   = "0.0.0.0";
 
   auto cli =
-      lyra::cli_parser() | lyra::opt(server_port, "port")["-p"]["--port"]("TCP port to listen on");
+      lyra::cli_parser() | lyra::opt(server_port, "port")["-p"]["--port"]("TCP port to listen on") |
+      lyra::opt(server_ip, "ip")["-i"]["--ip"]("Local IP address");;
 
   auto result = cli.parse({argc, argv});
   if (!result)
@@ -53,7 +55,7 @@ int main(int argc, char *argv[])
 
   server.start();
 
-  server.bind("0.0.0.0", server_port);
+  server.bind(server_ip, server_port);
   server.listen();
   server.set_on_accept(std::bind(on_accept, std::ref(server), std::placeholders::_1));
 
