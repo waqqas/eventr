@@ -19,26 +19,26 @@ class tcp_server_socket
 {
 public:
   using comm_socket_type = tcp_comm_socket<SIZE>;
-  using accept_cb_type   = std::function<void(comm_socket_type &)>;
+  using accept_cb_type   = std::function<void(comm_socket_type)>;
 
   tcp_server_socket(io_handler &io)
-    : io(io)
+    : _io(io)
   {
-    fd = ::socket(AF_INET, SOCK_STREAM, 0);
+    _fd = ::socket(AF_INET, SOCK_STREAM, 0);
 
-    if (fd == -1)
+    if (_fd == -1)
     {
       throw std::runtime_error(::strerror(errno));
     }
 
     // make socket non-blocking
-    int flags = fcntl(fd, F_GETFL, 0);
+    int flags = fcntl(_fd, F_GETFL, 0);
     if (flags == -1)
     {
       throw std::runtime_error(::strerror(errno));
     }
     flags |= O_NONBLOCK;
-    if (fcntl(fd, F_SETFL, flags) == -1)
+    if (fcntl(_fd, F_SETFL, flags) == -1)
     {
       throw std::runtime_error(::strerror(errno));
     }
@@ -46,27 +46,27 @@ public:
 
   ~tcp_server_socket()
   {
-    ::close(fd);
+    ::close(_fd);
   }
 
   void start()
   {
-    io.add(fd, std::bind(&tcp_server_socket::on_accept, this),
+    _io.add(_fd, std::bind(&tcp_server_socket::on_accept, this),
            std::bind(&tcp_server_socket::on_error, this));
   }
 
   void stop()
   {
-    io.remove(fd);
+    _io.remove(_fd);
   }
 
   void bind(const std::string &server_ip, const uint32_t &port)
   {
     sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port   = ::htons(port);
+    server_addr.sin_port   = htons(port);
     inet_aton(server_ip.c_str(), &server_addr.sin_addr);
-    if (::bind(fd, (sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+    if (::bind(_fd, (sockaddr *)&server_addr, sizeof(server_addr)) < 0)
     {
       throw std::runtime_error(::strerror(errno));
     }
@@ -74,7 +74,7 @@ public:
 
   void listen(int backlog = 10)
   {
-    if (::listen(fd, backlog) < 0)
+    if (::listen(_fd, backlog) < 0)
     {
       throw std::runtime_error(::strerror(errno));
     }
@@ -82,11 +82,11 @@ public:
 
   void set_on_accept(const accept_cb_type &cb)
   {
-    accept_cb = cb;
+    _accept_cb = cb;
   }
 
 private:
-  using comm_list_type = std::unordered_map<int, comm_socket_type>;
+  // using comm_list_type = std::unordered_map<int, comm_socket_type>;
 
   void on_accept()
   {
@@ -94,45 +94,46 @@ private:
     socklen_t   addr_length = sizeof(client_addr);
     int         comm_fd     = -1;
 
-    comm_fd = ::accept(fd, (sockaddr *)&client_addr, &addr_length);
+    comm_fd = ::accept(_fd, (sockaddr *)&client_addr, &addr_length);
     if (comm_fd < 0)
     {
       throw std::runtime_error(::strerror(errno));
     }
 
-    // std::shared_ptr<comm_socket_type> comm_socket = std::make_shared<comm_socket_type>(io, fd);
+    // comm_socket_type comm_socket = std::make_unique<comm_socket_type>(_io, _fd);
     // comm_socket->mark_as_connected();  // already connected
-    // accept_cb(comm_socket);
+    // _accept_cb(comm_socket);
 
-    comm_socket_type comm_socket(io, fd);
+    comm_socket_type comm_socket(_io, _fd);
     comm_socket.mark_as_connected();
+    _accept_cb(comm_socket);
 
-    typename comm_list_type::iterator it;
-    bool                              inserted = false;
-    std::tie(it, inserted)                     = comm_list.emplace(fd, std::move(comm_socket));
+    // typename comm_list_type::iterator it;
+    // bool                              inserted = false;
+    // std::tie(it, inserted)                     = comm_list.emplace(_fd, std::move(comm_socket));
 
-    if (inserted == true)
-    {
-      std::cout << "new client: " << it->second << std::endl;
-      accept_cb(it->second);
-    }
+    // if (inserted == true)
+    // {
+    //   std::cout << "new client: " << it->second << std::endl;
+    //   _accept_cb(it->second);
+    // }
   }
 
   // void stop_comm_socket(const comm_socket_type &comm_socket)
   // {
-  //   comm_list.find(comm_socket.fd);
+  //   comm_list.find(comm_socket._fd);
   // }
 
   void on_error()
   {
-    io.remove(fd);
+    _io.remove(_fd);
   }
 
 private:
-  io_handler &   io;
-  int            fd;
-  accept_cb_type accept_cb;
-  comm_list_type comm_list;
+  io_handler &   _io;
+  int            _fd;
+  accept_cb_type _accept_cb;
+  // comm_list_type comm_list;
 };
 }  // namespace Eventr
 #endif

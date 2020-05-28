@@ -6,8 +6,8 @@
 
 #define UNUSED(x) (void)(x)
 
-using sever_socket_type = Eventr::tcp_server_socket<2048>;
-using comm_socket_type  = typename sever_socket_type::comm_socket_type;
+using server_socket_type = Eventr::tcp_server_socket<2048>;
+using comm_socket_type  = typename server_socket_type::comm_socket_type;
 
 void on_receive(comm_socket_type &comm_socket, const comm_socket_type::buffer_type &buffer,
                 const ssize_t &size)
@@ -25,7 +25,7 @@ void on_receive(comm_socket_type &comm_socket, const comm_socket_type::buffer_ty
   }
 }
 
-void on_accept(sever_socket_type &server, comm_socket_type &comm_socket)
+void on_accept(server_socket_type &server, comm_socket_type comm_socket)
 {
   UNUSED(server);
   std::cout << "New client connected: " << comm_socket << std::endl;
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
   }
 
   Eventr::io_handler io(10);
-  sever_socket_type  server(io);
+  server_socket_type  server(io);
 
   server.start();
 
