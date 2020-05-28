@@ -61,7 +61,7 @@ public:
   {
     sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port   = ::htons(port);
+    server_addr.sin_port   = htons(port);
     inet_aton(server_ip.c_str(), &server_addr.sin_addr);
     if (::bind(fd, (sockaddr *)&server_addr, sizeof(server_addr)) < 0)
     {
@@ -84,7 +84,7 @@ public:
   {
     sockaddr_in remote_addr;
     remote_addr.sin_family = AF_INET;
-    remote_addr.sin_port   = ::htons(to_port);
+    remote_addr.sin_port   = htons(to_port);
     inet_aton(to_ip.c_str(), &remote_addr.sin_addr);
 
     send(payload, size, remote_addr);
