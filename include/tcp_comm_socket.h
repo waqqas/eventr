@@ -51,26 +51,25 @@ public:
   }
 
   // non-copyable
-  // tcp_comm_socket(tcp_comm_socket &other) = delete;
-  // tcp_comm_socket &operator=(tcp_comm_socket &other) = delete;
+  tcp_comm_socket(const tcp_comm_socket &other) = delete;
+  tcp_comm_socket &operator=(const tcp_comm_socket &other) = delete;
 
-  // only moveable
-  // tcp_comm_socket(tcp_comm_socket &&other)
-  //   : _io(other._io)
-  //   , _fd(other._fd)
-  // {
-  //   other._fd = -1;
-  // }
+  tcp_comm_socket(tcp_comm_socket &&other)
+    : _io(other._io)
+    , _fd(other._fd)
+  {
+    other._fd = -1;
+  }
 
-  // tcp_comm_socket &operator=(tcp_comm_socket &&other)
-  // {
-  //   if (this != &other)
-  //   {
-  //     _io       = other._io;
-  //     _fd       = other._fd;
-  //     other._fd = -1;
-  //   }
-  // }
+  tcp_comm_socket &operator=(tcp_comm_socket &&other)
+  {
+    if (this != &other)
+    {
+      _io       = other._io;
+      _fd       = other._fd;
+      other._fd = -1;
+    }
+  }
 
   ~tcp_comm_socket()
   {
@@ -79,6 +78,11 @@ public:
     {
       ::close(_fd);
     }
+  }
+
+  int id() const
+  {
+    return _fd;
   }
 
   void start()
@@ -149,7 +153,7 @@ public:
 
   friend std::ostream &operator<<(std::ostream &os, const tcp_comm_socket<SIZE> &socket)
   {
-    os << "fd:" << socket._fd;
+    os << "fd:" << socket.id();
     return os;
   }
 

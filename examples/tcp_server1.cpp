@@ -1,38 +1,89 @@
+#include "fd_reader.h"
 #include "tcp_comm_socket.h"
 #include "tcp_server_socket.h"
 
 #include <iostream>
 #include <lyra/lyra.hpp>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
 
 #define UNUSED(x) (void)(x)
 
-using server_socket_type = Eventr::tcp_server_socket<2048>;
-using comm_socket_type  = typename server_socket_type::comm_socket_type;
-
-void on_receive(comm_socket_type &comm_socket, const comm_socket_type::buffer_type &buffer,
-                const ssize_t &size)
+class App
 {
-  static int  count = 5;
-  std::string data(buffer.data(), size);
-  std::cout << "received : " << data << " on " << comm_socket << std::endl;
+  using server_socket_type = Eventr::tcp_server_socket<2048>;
+  using comm_socket_type   = typename server_socket_type::comm_socket_type;
+  using reader_type        = Eventr::fd_reader<2048>;
+  using client_list_type   = std::unordered_map<int, comm_socket_type>;
 
-  // eacho back what is received
-  comm_socket.send(buffer.data(), size);
-
-  if (count-- == 0)
+public:
+  void on_receive(const int id, const comm_socket_type::buffer_type &buffer, const ssize_t &size)
   {
-    comm_socket.stop();
+    static int  count = 5;
+    std::string data(buffer.data(), size);
+    std::cout << "received : " << data << " on " << id << std::endl;
+
+    auto it = client_list.find(id);
+    if (it != client_list.end())
+    {
+      // echo back what is received
+      it->second.send(buffer.data(), size);
+      if (count-- == 0)
+      {
+        it->second.stop();
+      }
+    }
   }
-}
 
-void on_accept(server_socket_type &server, comm_socket_type comm_socket)
-{
-  UNUSED(server);
-  std::cout << "New client connected: " << comm_socket << std::endl;
+  void on_accept(const comm_socket_type &comm_socket)
+  {
+    std::cout << "New client connected: " << comm_socket << std::endl;
 
-  comm_socket.set_on_receive(
-      std::bind(on_receive, std::ref(comm_socket), std::placeholders::_1, std::placeholders::_2));
-}
+    client_list_type::iterator it;
+    bool                       inserted = false;
+
+    // std::tie(it, inserted) = client_list.emplace(comm_socket.id(), std::move(comm_socket));
+
+    if (inserted == true)
+    {
+      // it->second.set_on_receive(std::bind(&App::on_receive, this, it->second.id(),
+      //                                     std::placeholders::_1, std::placeholders::_2));
+    }
+  }
+
+  void on_read(reader_type::buffer_type buffer, const size_t &size)
+  {
+    static int  count = 5;
+    std::string data(buffer.data(), size);
+    std::cout << "read : " << data << std::endl;
+    if (count-- == 0)
+    {
+      reader.stop();
+    }
+  }
+
+  App(Eventr::io_handler &io)
+    : server(io)
+    , reader(io, STDERR_FILENO)
+  {}
+
+  void init(const std::string &ip, uint32_t port)
+  {
+    server.bind(ip, port);
+    server.listen();
+    server.set_on_accept(std::bind(&App::on_accept, this, std::placeholders::_1));
+    server.start();
+
+    reader.set_cb(std::bind(&App::on_read, this, std::placeholders::_1, std::placeholders::_2));
+    reader.start();
+  }
+
+private:
+  server_socket_type server;
+  reader_type        reader;
+  client_list_type   client_list;
+};
 
 int main(int argc, char *argv[])
 {
@@ -52,17 +103,13 @@ int main(int argc, char *argv[])
   }
 
   Eventr::io_handler io(10);
-  server_socket_type  server(io);
+  App                app(io);
 
-  server.start();
-
-  server.bind(server_ip, server_port);
-  server.listen();
-  server.set_on_accept(std::bind(on_accept, std::ref(server), std::placeholders::_1));
+  app.init(server_ip, server_port);
 
   io.run();
 
-  server.stop();
+  // app.stop();
 
   return 0;
 }

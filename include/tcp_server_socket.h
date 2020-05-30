@@ -19,7 +19,7 @@ class tcp_server_socket
 {
 public:
   using comm_socket_type = tcp_comm_socket<SIZE>;
-  using accept_cb_type   = std::function<void(comm_socket_type)>;
+  using accept_cb_type   = std::function<void(const comm_socket_type &)>;
 
   tcp_server_socket(io_handler &io)
     : _io(io)
@@ -49,10 +49,15 @@ public:
     ::close(_fd);
   }
 
+  int id() const
+  {
+    return _fd;
+  }
+
   void start()
   {
     _io.add(_fd, std::bind(&tcp_server_socket::on_accept, this),
-           std::bind(&tcp_server_socket::on_error, this));
+            std::bind(&tcp_server_socket::on_error, this));
   }
 
   void stop()
@@ -86,8 +91,6 @@ public:
   }
 
 private:
-  // using comm_list_type = std::unordered_map<int, comm_socket_type>;
-
   void on_accept()
   {
     sockaddr_in client_addr;
@@ -107,22 +110,7 @@ private:
     comm_socket_type comm_socket(_io, _fd);
     comm_socket.mark_as_connected();
     _accept_cb(comm_socket);
-
-    // typename comm_list_type::iterator it;
-    // bool                              inserted = false;
-    // std::tie(it, inserted)                     = comm_list.emplace(_fd, std::move(comm_socket));
-
-    // if (inserted == true)
-    // {
-    //   std::cout << "new client: " << it->second << std::endl;
-    //   _accept_cb(it->second);
-    // }
   }
-
-  // void stop_comm_socket(const comm_socket_type &comm_socket)
-  // {
-  //   comm_list.find(comm_socket._fd);
-  // }
 
   void on_error()
   {
@@ -133,7 +121,6 @@ private:
   io_handler &   _io;
   int            _fd;
   accept_cb_type _accept_cb;
-  // comm_list_type comm_list;
 };
 }  // namespace Eventr
 #endif
