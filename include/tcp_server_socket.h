@@ -103,12 +103,7 @@ private:
       throw std::runtime_error(::strerror(errno));
     }
 
-    // comm_socket_type comm_socket = std::make_unique<comm_socket_type>(_io, _fd);
-    // comm_socket->mark_as_connected();  // already connected
-    // _accept_cb(comm_socket);
-
     comm_socket_type comm_socket(_io, _fd);
-    comm_socket.mark_as_connected();
     _accept_cb(comm_socket);
   }
 

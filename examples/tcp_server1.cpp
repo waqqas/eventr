@@ -4,10 +4,10 @@
 
 #include <iostream>
 #include <lyra/lyra.hpp>
+#include <memory>
 #include <tuple>
 #include <unordered_map>
 #include <utility>
-#include <memory>
 
 #define UNUSED(x) (void)(x)
 
@@ -39,17 +39,18 @@ public:
 
   void on_accept(comm_socket_type &comm_socket)
   {
-    std::cout << "New client connected: " << comm_socket << std::endl;
-
     client_list_type::iterator it;
     bool                       inserted = false;
 
-    std::tie(it, inserted) = client_list.emplace(comm_socket.id(), std::make_unique<comm_socket_type>(std::move(comm_socket)));
+    std::tie(it, inserted) = client_list.emplace(
+        comm_socket.id(), std::make_unique<comm_socket_type>(std::move(comm_socket)));
 
     if (inserted == true)
     {
+      std::cout << "New client connected: " << it->second->id() << std::endl;
       it->second->set_on_receive(std::bind(&App::on_receive, this, it->second->id(),
-                                          std::placeholders::_1, std::placeholders::_2));
+                                           std::placeholders::_1, std::placeholders::_2));
+      it->second->mark_as_connected();
     }
   }
 
@@ -58,6 +59,20 @@ public:
     static int  count = 5;
     std::string data(buffer.data(), size);
     std::cout << "read : " << data << std::endl;
+
+    for (auto &client : client_list)
+    {
+      std::cout << "sending on: " << client.second->id() << std::endl;
+      try
+      {
+        client.second->send(buffer.data(), size);
+      }
+      catch (std::exception &e)
+      {
+        std::cout << "send exception: " << e.what() << std::endl;
+      }
+    }
+
     if (count-- == 0)
     {
       reader.stop();
@@ -78,6 +93,11 @@ public:
 
     reader.set_cb(std::bind(&App::on_read, this, std::placeholders::_1, std::placeholders::_2));
     reader.start();
+  }
+
+  void stop()
+  {
+    // IMPLEMENT ME
   }
 
 private:
@@ -110,7 +130,9 @@ int main(int argc, char *argv[])
 
   io.run();
 
-  // app.stop();
+  app.stop();
+
+  std::cout << "app exiting" << std::endl;
 
   return 0;
 }
