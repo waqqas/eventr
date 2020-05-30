@@ -7,6 +7,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <utility>
+#include <memory>
 
 #define UNUSED(x) (void)(x)
 
@@ -15,7 +16,7 @@ class App
   using server_socket_type = Eventr::tcp_server_socket<2048>;
   using comm_socket_type   = typename server_socket_type::comm_socket_type;
   using reader_type        = Eventr::fd_reader<2048>;
-  using client_list_type   = std::unordered_map<int, comm_socket_type>;
+  using client_list_type   = std::unordered_map<int, std::unique_ptr<comm_socket_type>>;
 
 public:
   void on_receive(const int id, const comm_socket_type::buffer_type &buffer, const ssize_t &size)
@@ -28,27 +29,27 @@ public:
     if (it != client_list.end())
     {
       // echo back what is received
-      it->second.send(buffer.data(), size);
+      it->second->send(buffer.data(), size);
       if (count-- == 0)
       {
-        it->second.stop();
+        it->second->stop();
       }
     }
   }
 
-  void on_accept(const comm_socket_type &comm_socket)
+  void on_accept(comm_socket_type &comm_socket)
   {
     std::cout << "New client connected: " << comm_socket << std::endl;
 
     client_list_type::iterator it;
     bool                       inserted = false;
 
-    // std::tie(it, inserted) = client_list.emplace(comm_socket.id(), std::move(comm_socket));
+    std::tie(it, inserted) = client_list.emplace(comm_socket.id(), std::make_unique<comm_socket_type>(std::move(comm_socket)));
 
     if (inserted == true)
     {
-      // it->second.set_on_receive(std::bind(&App::on_receive, this, it->second.id(),
-      //                                     std::placeholders::_1, std::placeholders::_2));
+      it->second->set_on_receive(std::bind(&App::on_receive, this, it->second->id(),
+                                          std::placeholders::_1, std::placeholders::_2));
     }
   }
 
