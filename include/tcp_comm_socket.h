@@ -5,6 +5,7 @@
 #include "itcp_socket.h"
 
 #include <arpa/inet.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <iostream>
 #include <netinet/in.h>
@@ -24,6 +25,7 @@ public:
   tcp_comm_socket(io_handler &io, int fd = -1)
     : _io(io)
     , _fd(fd)
+    , _isConnected(false)
   {
     // open a new socket if not already provided
     if (_fd == -1)
@@ -184,14 +186,14 @@ private:
     }
     else
     {
-      _error_cb();
+      _error_cb(errno);
     }
   }
 
   void on_error(void)
   {
     _io.remove(_fd);
-    _error_cb();
+    _error_cb(errno);
   }
 
   void on_connect()
@@ -203,7 +205,7 @@ private:
 private:
   io_handler &    _io;
   int             _fd;
-  bool            _isConnected = false;
+  bool            _isConnected;
   receive_cb_type _receive_cb;
   connect_cb_type _connect_cb;
   error_cb_type   _error_cb;

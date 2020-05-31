@@ -2,6 +2,7 @@
 #include "tcp_comm_socket.h"
 #include "tcp_server_socket.h"
 
+#include <functional>
 #include <iostream>
 #include <lyra/lyra.hpp>
 #include <memory>
@@ -37,9 +38,9 @@ public:
       }
     }
   }
-  void on_receive_error(const int id)
+  void on_receive_error(const int id, const int error)
   {
-    std::cout << "on_receive_error: " << id << " error: " << std::endl;
+    std::cout << "on_receive_error: " << id << " error: " << ::strerror(error) << std::endl;
   }
 
   void on_accept(comm_socket_type &comm_socket)
@@ -56,15 +57,15 @@ public:
       it->second->set_on_receive(std::bind(&App::on_receive, this, it->second->id(),
                                            std::placeholders::_1, std::placeholders::_2));
       it->second->set_on_error(
-          std::bind(&App::on_receive_error, this, it->second->id()));
+          std::bind(&App::on_receive_error, this, it->second->id(), std::placeholders::_1));
 
       it->second->start();
     }
   }
 
-  void on_accept_error()
+  void on_accept_error(const int error)
   {
-    std::cout << "on_accept_error: " << std::endl;
+    std::cout << "on_accept_error: " << ::strerror(error) << std::endl;
   }
 
   void on_read(reader_type::buffer_type buffer, const size_t &size)
@@ -102,16 +103,11 @@ public:
     server.bind(ip, port);
     server.listen();
     server.set_on_accept(std::bind(&App::on_accept, this, std::placeholders::_1));
-    server.set_on_error(std::bind(&App::on_accept_error, this));
+    server.set_on_error(std::bind(&App::on_accept_error, this, std::placeholders::_1));
     server.start();
 
     reader.set_cb(std::bind(&App::on_read, this, std::placeholders::_1, std::placeholders::_2));
     reader.start();
-  }
-
-  void stop()
-  {
-    // IMPLEMENT ME
   }
 
 private:
@@ -143,8 +139,6 @@ int main(int argc, char *argv[])
   app.init(server_ip, server_port);
 
   io.run();
-
-  app.stop();
 
   std::cout << "app exiting" << std::endl;
 
