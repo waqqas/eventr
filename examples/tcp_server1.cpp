@@ -50,7 +50,7 @@ public:
       std::cout << "New client connected: " << it->second->id() << std::endl;
       it->second->set_on_receive(std::bind(&App::on_receive, this, it->second->id(),
                                            std::placeholders::_1, std::placeholders::_2));
-      it->second->mark_as_connected();
+      it->second->start();
     }
   }
 

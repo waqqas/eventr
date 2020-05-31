@@ -30,7 +30,7 @@ public:
       _fd = ::socket(AF_INET, SOCK_STREAM, 0);
     }
 
-    std::cout << "COMM opened: " << _fd << std::endl;
+    // std::cout << "COMM opened: " << _fd << std::endl;
 
     if (_fd == -1)
     {
@@ -57,6 +57,7 @@ public:
   tcp_comm_socket(tcp_comm_socket &&other)
     : _io(other._io)
     , _fd(other._fd)
+    , _isConnected(other._isConnected)
   {
     other._fd = -1;
   }
@@ -65,17 +66,19 @@ public:
   {
     if (this != &other)
     {
-      _io       = other._io;
-      _fd       = other._fd;
+      _io          = other._io;
+      _fd          = other._fd;
+      _isConnected = other._isConnected;
       other._fd = -1;
     }
   }
 
   ~tcp_comm_socket()
   {
-    std::cout << "COMM closed: " << _fd << std::endl;
     if (_fd > -1)
     {
+      // std::cout << "COMM closed: " << _fd << std::endl;
+      stop();
       ::close(_fd);
     }
   }
@@ -87,15 +90,22 @@ public:
 
   void start()
   {
-    _io.add(_fd, std::bind(&tcp_comm_socket<SIZE>::on_connect, this),
-            std::bind(&tcp_comm_socket<SIZE>::on_error, this));
+    // std::cout << "start: " << _fd << " connected :" << _isConnected << std::endl;
+    if (_isConnected)
+    {
+      _io.add(_fd, std::bind(&tcp_comm_socket<SIZE>::on_receive, this),
+              std::bind(&tcp_comm_socket<SIZE>::on_error, this));
+    }
+    else
+    {
+      _io.add(_fd, std::bind(&tcp_comm_socket<SIZE>::on_connect, this),
+              std::bind(&tcp_comm_socket<SIZE>::on_error, this));
+    }
   }
 
   void mark_as_connected()
   {
-    // change connect callback with receive callback
-    _io.add(_fd, std::bind(&tcp_comm_socket<SIZE>::on_receive, this),
-            std::bind(&tcp_comm_socket<SIZE>::on_error, this));
+    _isConnected = true;
   }
 
   void stop()
@@ -161,7 +171,7 @@ private:
   void on_receive()
   {
     ssize_t bytes_received = ::recv(_fd, _recv_buffer.data(), SIZE, 0);
-    std::cout << "receveied: (" << bytes_received << ") " << std::endl;
+    // std::cout << "receveied: (" << bytes_received << ") " << std::endl;
     if (bytes_received > 0)
     {
       _receive_cb(_recv_buffer, bytes_received);
@@ -185,6 +195,7 @@ private:
   receive_cb_type _receive_cb;
   connect_cb_type _connect_cb;
   buffer_type     _recv_buffer;
+  bool            _isConnected = false;
 };
 
 }  // namespace Eventr

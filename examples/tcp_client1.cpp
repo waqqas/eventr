@@ -33,6 +33,7 @@ void on_connect(comm_socket_type &client)
   std::cout << "client connected" << std::endl;
   client.set_on_receive(
       std::bind(on_receive, std::ref(client), std::placeholders::_1, std::placeholders::_2));
+  client.start();
 
   // client.send("hello", sizeof("hello"));
 }

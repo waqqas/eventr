@@ -3,6 +3,7 @@
 
 #include <cerrno>
 #include <functional>
+// #include <iostream>
 #include <stdexcept>
 #include <string.h>
 #include <sys/epoll.h>
@@ -51,6 +52,8 @@ public:
 
     std::tie(it, inserted) = _event_list.emplace(fd, event_data{fd, success_cb, error_cb});
 
+    // std::cout << "adding: " << fd << " inserted:" << inserted << std::endl;
+
     if (inserted == true)
     {
       epoll_event ev;
@@ -72,11 +75,16 @@ public:
 
   void remove(int fd)
   {
-    _event_list.erase(fd);
+    // std::cout << "removing: " << fd << std::endl;
 
-    if (::epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1)
+    if (_event_list.find(fd) != _event_list.end())
     {
-      throw std::runtime_error(::strerror(errno));
+      _event_list.erase(fd);
+
+      if (::epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1)
+      {
+        throw std::runtime_error(::strerror(errno));
+      }
     }
   }
 
@@ -98,9 +106,11 @@ public:
       if ((_epoll_list[count].events & EPOLLERR) || (_epoll_list[count].events & EPOLLHUP) ||
           (!(_epoll_list[count].events & EPOLLIN)))
       {
+        // std::cout << "calling error cb" << std::endl;
         data->error_cb(errno);
         continue;
       }
+      // std::cout << "calling success cb" << std::endl;
 
       data->success_cb();
     }
