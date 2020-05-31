@@ -36,11 +36,11 @@ void on_connect(comm_socket_type &client)
   client.start();
 }
 
-void on_error(comm_socket_type &client)
+void on_error(comm_socket_type &client, const int &error)
 {
-  std::cout << "on_error: " << client << " error:" << std::endl;
-  // client.stop();
+  std::cout << "on_error: " << client << " error:" << ::strerror(error) << std::endl;
 }
+ 
 
 int main(int argc, char *argv[])
 {
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
   try
   {
     client.set_on_connect(std::bind(on_connect, std::ref(client)));
-    client.set_on_error(std::bind(on_error, std::ref(client)));
+    client.set_on_error(std::bind(on_error, std::ref(client), std::placeholders::_1));
 
     client.start();
 

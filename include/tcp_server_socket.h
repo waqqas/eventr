@@ -21,7 +21,7 @@ class tcp_server_socket
 public:
   using comm_socket_type = tcp_comm_socket<SIZE>;
   using accept_cb_type   = std::function<void(comm_socket_type &)>;
-  using error_cb_type    = std::function<void(const int)>;
+  using error_cb_type    = std::function<void(const int&)>;
 
   tcp_server_socket(io_handler &io)
     : _io(io)

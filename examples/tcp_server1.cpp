@@ -38,7 +38,7 @@ public:
       }
     }
   }
-  void on_receive_error(const int id, const int error)
+  void on_receive_error(const int id, const int& error)
   {
     std::cout << "on_receive_error: " << id << " error: " << ::strerror(error) << std::endl;
   }
@@ -63,7 +63,7 @@ public:
     }
   }
 
-  void on_accept_error(const int error)
+  void on_accept_error(const int& error)
   {
     std::cout << "on_accept_error: " << ::strerror(error) << std::endl;
   }
