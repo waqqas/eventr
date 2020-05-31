@@ -19,6 +19,7 @@ public:
   using buffer_type     = typename itcp_socket<SIZE>::buffer_type;
   using receive_cb_type = typename itcp_socket<SIZE>::receive_cb_type;
   using connect_cb_type = typename itcp_socket<SIZE>::connect_cb_type;
+  using error_cb_type   = typename itcp_socket<SIZE>::error_cb_type;
 
   tcp_comm_socket(io_handler &io, int fd = -1)
     : _io(io)
@@ -69,7 +70,7 @@ public:
       _io          = other._io;
       _fd          = other._fd;
       _isConnected = other._isConnected;
-      other._fd = -1;
+      other._fd    = -1;
     }
   }
 
@@ -91,14 +92,14 @@ public:
   void start()
   {
     // std::cout << "start: " << _fd << " connected :" << _isConnected << std::endl;
-    if (_isConnected)
+    if (_isConnected == false)
     {
-      _io.add(_fd, std::bind(&tcp_comm_socket<SIZE>::on_receive, this),
+      _io.add(_fd, std::bind(&tcp_comm_socket<SIZE>::on_connect, this),
               std::bind(&tcp_comm_socket<SIZE>::on_error, this));
     }
     else
     {
-      _io.add(_fd, std::bind(&tcp_comm_socket<SIZE>::on_connect, this),
+      _io.add(_fd, std::bind(&tcp_comm_socket<SIZE>::on_receive, this),
               std::bind(&tcp_comm_socket<SIZE>::on_error, this));
     }
   }
@@ -146,7 +147,6 @@ public:
     {
       if (errno != EINPROGRESS)
       {
-
         throw std::runtime_error(::strerror(errno));
       }
     }
@@ -156,14 +156,20 @@ public:
   {
     _connect_cb = cb;
   }
+
   void set_on_receive(const receive_cb_type &cb)
   {
     _receive_cb = cb;
   }
 
+  void set_on_error(const error_cb_type &cb)
+  {
+    _error_cb = cb;
+  }
+
   friend std::ostream &operator<<(std::ostream &os, const tcp_comm_socket<SIZE> &socket)
   {
-    os << "fd:" << socket.id();
+    os << "id:" << socket.id();
     return os;
   }
 
@@ -176,11 +182,16 @@ private:
     {
       _receive_cb(_recv_buffer, bytes_received);
     }
+    else
+    {
+      _error_cb();
+    }
   }
 
-  void on_error()
+  void on_error(void)
   {
     _io.remove(_fd);
+    _error_cb();
   }
 
   void on_connect()
@@ -192,10 +203,11 @@ private:
 private:
   io_handler &    _io;
   int             _fd;
+  bool            _isConnected = false;
   receive_cb_type _receive_cb;
   connect_cb_type _connect_cb;
+  error_cb_type   _error_cb;
   buffer_type     _recv_buffer;
-  bool            _isConnected = false;
 };
 
 }  // namespace Eventr

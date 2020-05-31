@@ -14,6 +14,7 @@ public:
   using buffer_type     = std::array<char, SIZE>;
   using receive_cb_type = std::function<void(const buffer_type &, const ssize_t &)>;
   using connect_cb_type = std::function<void(void)>;
+  using error_cb_type   = std::function<void(void)>;
 
   virtual void start()                            = 0;
   virtual void stop()                             = 0;

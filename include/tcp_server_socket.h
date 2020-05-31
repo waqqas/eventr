@@ -6,6 +6,7 @@
 
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <iostream>
 #include <memory>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -20,6 +21,7 @@ class tcp_server_socket
 public:
   using comm_socket_type = tcp_comm_socket<SIZE>;
   using accept_cb_type   = std::function<void(comm_socket_type &)>;
+  using error_cb_type    = std::function<void(void)>;
 
   tcp_server_socket(io_handler &io)
     : _io(io)
@@ -90,6 +92,17 @@ public:
     _accept_cb = cb;
   }
 
+  void set_on_error(const error_cb_type &cb)
+  {
+    _error_cb = cb;
+  }
+
+  friend std::ostream &operator<<(std::ostream &os, const tcp_server_socket<SIZE> &socket)
+  {
+    os << "id:" << socket.id();
+    return os;
+  }
+
 private:
   void on_accept()
   {
@@ -111,12 +124,14 @@ private:
   void on_error()
   {
     _io.remove(_fd);
+    _error_cb();
   }
 
 private:
   io_handler &   _io;
   int            _fd;
   accept_cb_type _accept_cb;
+  error_cb_type  _error_cb;
 };
 }  // namespace Eventr
 #endif

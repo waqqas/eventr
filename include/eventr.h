@@ -17,7 +17,7 @@ class io_handler
 {
 private:
   using event_success_cb_type = std::function<void(void)>;
-  using event_error_cb_type   = std::function<void(int)>;
+  using event_error_cb_type   = std::function<void(void)>;
 
   struct event_data
   {
@@ -107,7 +107,7 @@ public:
           (!(_epoll_list[count].events & EPOLLIN)))
       {
         // std::cout << "calling error cb" << std::endl;
-        data->error_cb(errno);
+        data->error_cb();
         continue;
       }
       // std::cout << "calling success cb" << std::endl;

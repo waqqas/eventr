@@ -32,9 +32,14 @@ public:
       it->second->send(buffer.data(), size);
       if (count-- == 0)
       {
-        it->second->stop();
+        // it->second->stop();
+        client_list.erase(it);
       }
     }
+  }
+  void on_receive_error(const int id)
+  {
+    std::cout << "on_receive_error: " << id << " error: " << std::endl;
   }
 
   void on_accept(comm_socket_type &comm_socket)
@@ -50,8 +55,16 @@ public:
       std::cout << "New client connected: " << it->second->id() << std::endl;
       it->second->set_on_receive(std::bind(&App::on_receive, this, it->second->id(),
                                            std::placeholders::_1, std::placeholders::_2));
+      it->second->set_on_error(
+          std::bind(&App::on_receive_error, this, it->second->id()));
+
       it->second->start();
     }
+  }
+
+  void on_accept_error()
+  {
+    std::cout << "on_accept_error: " << std::endl;
   }
 
   void on_read(reader_type::buffer_type buffer, const size_t &size)
@@ -89,6 +102,7 @@ public:
     server.bind(ip, port);
     server.listen();
     server.set_on_accept(std::bind(&App::on_accept, this, std::placeholders::_1));
+    server.set_on_error(std::bind(&App::on_accept_error, this));
     server.start();
 
     reader.set_cb(std::bind(&App::on_read, this, std::placeholders::_1, std::placeholders::_2));
