@@ -30,7 +30,7 @@ void on_receive(comm_socket_type &client, const comm_socket_type::buffer_type &b
 
 void on_connect(comm_socket_type &client)
 {
-  std::cout << "on_connect" << client.id() << std::endl;
+  std::cout << "on_connect: " << client << std::endl;
   client.set_on_receive(
       std::bind(on_receive, std::ref(client), std::placeholders::_1, std::placeholders::_2));
   client.start();

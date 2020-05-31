@@ -38,7 +38,7 @@ public:
       }
     }
   }
-  void on_receive_error(const int id, const int& error)
+  void on_receive_error(const int id, const int &error)
   {
     std::cout << "on_receive_error: " << id << " error: " << ::strerror(error) << std::endl;
   }
@@ -48,12 +48,13 @@ public:
     client_list_type::iterator it;
     bool                       inserted = false;
 
-    std::tie(it, inserted) = client_list.emplace(
-        comm_socket.id(), std::make_unique<comm_socket_type>(std::move(comm_socket)));
+    std::tie(it, inserted) = client_list.insert(
+        {comm_socket.id(), std::make_unique<comm_socket_type>(std::move(comm_socket))});
+
+    std::cout << "New client connected: " << it->second->id() << std::endl;
 
     if (inserted == true)
     {
-      std::cout << "New client connected: " << it->second->id() << std::endl;
       it->second->set_on_receive(std::bind(&App::on_receive, this, it->second->id(),
                                            std::placeholders::_1, std::placeholders::_2));
       it->second->set_on_error(
@@ -63,7 +64,7 @@ public:
     }
   }
 
-  void on_accept_error(const int& error)
+  void on_accept_error(const int &error)
   {
     std::cout << "on_accept_error: " << ::strerror(error) << std::endl;
   }
