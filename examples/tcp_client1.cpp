@@ -28,19 +28,25 @@ void on_receive(comm_socket_type &client, const comm_socket_type::buffer_type &b
   }
 }
 
+void on_receive_error(comm_socket_type &client, const int &error)
+{
+  std::cout << "on_receive_error: " << client << " error:" << ::strerror(error) << std::endl;
+}
+
+void on_connect_error(comm_socket_type &client, const int &error)
+{
+  std::cout << "on_connect_error: " << client << " error:" << ::strerror(error) << std::endl;
+}
+
 void on_connect(comm_socket_type &client)
 {
   std::cout << "on_connect: " << client << std::endl;
   client.set_on_receive(
       std::bind(on_receive, std::ref(client), std::placeholders::_1, std::placeholders::_2));
+  client.set_on_error(std::bind(on_receive_error, std::ref(client), std::placeholders::_1));
   client.start();
 }
 
-void on_error(comm_socket_type &client, const int &error)
-{
-  std::cout << "on_error: " << client << " error:" << ::strerror(error) << std::endl;
-}
- 
 
 int main(int argc, char *argv[])
 {
@@ -65,7 +71,7 @@ int main(int argc, char *argv[])
   try
   {
     client.set_on_connect(std::bind(on_connect, std::ref(client)));
-    client.set_on_error(std::bind(on_error, std::ref(client), std::placeholders::_1));
+    client.set_on_error(std::bind(on_connect_error, std::ref(client), std::placeholders::_1));
 
     client.start();
 

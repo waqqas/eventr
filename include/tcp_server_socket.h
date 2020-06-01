@@ -59,7 +59,7 @@ public:
   void start()
   {
     _io.add(_fd, std::bind(&tcp_server_socket::on_accept, this),
-            std::bind(&tcp_server_socket::on_error, this));
+            std::bind(&tcp_server_socket::on_error, this, std::placeholders::_1));
   }
 
   void stop()
@@ -121,10 +121,10 @@ private:
     _accept_cb(comm_socket);
   }
 
-  void on_error()
+  void on_error(const int& error)
   {
     _io.remove(_fd);
-    _error_cb(errno);
+    _error_cb(error);
   }
 
 private:

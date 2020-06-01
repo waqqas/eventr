@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <string.h>
 #include <sys/epoll.h>
+#include <sys/socket.h>
 #include <tuple>
 #include <unistd.h>
 #include <unordered_map>
@@ -17,7 +18,7 @@ class io_handler
 {
 private:
   using event_success_cb_type = std::function<void(void)>;
-  using event_error_cb_type   = std::function<void(void)>;
+  using event_error_cb_type   = std::function<void(const int &)>;
 
   struct event_data
   {
@@ -106,8 +107,12 @@ public:
       if ((_epoll_list[count].events & EPOLLERR) || (_epoll_list[count].events & EPOLLHUP) ||
           (!(_epoll_list[count].events & EPOLLIN)))
       {
-        // std::cout << "calling error cb" << std::endl;
-        data->error_cb();
+        int       result;
+        socklen_t result_len = sizeof(result);
+        if (getsockopt(data->fd, SOL_SOCKET, SO_ERROR, &result, &result_len) >= 0)
+        {
+          data->error_cb(result);
+        }
         continue;
       }
       // std::cout << "calling success cb" << std::endl;
