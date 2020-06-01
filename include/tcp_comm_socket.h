@@ -97,12 +97,12 @@ public:
     if (_isConnected == false)
     {
       _io.add(_fd, std::bind(&tcp_comm_socket<SIZE>::on_connect, this),
-              std::bind(&tcp_comm_socket<SIZE>::on_error, this));
+              std::bind(&tcp_comm_socket<SIZE>::on_error, this, std::placeholders::_1));
     }
     else
     {
       _io.add(_fd, std::bind(&tcp_comm_socket<SIZE>::on_receive, this),
-              std::bind(&tcp_comm_socket<SIZE>::on_error, this));
+              std::bind(&tcp_comm_socket<SIZE>::on_error, this, std::placeholders::_1));
     }
   }
 
@@ -190,10 +190,10 @@ private:
     }
   }
 
-  void on_error(void)
+  void on_error(const int& error)
   {
     _io.remove(_fd);
-    _error_cb(errno);
+    _error_cb(error);
   }
 
   void on_connect()
