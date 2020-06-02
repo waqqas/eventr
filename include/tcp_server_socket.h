@@ -123,8 +123,8 @@ private:
 
   void on_error(const int& error)
   {
-    _io.remove(_fd);
     _error_cb(error);
+    _io.remove(_fd);
   }
 
 private:

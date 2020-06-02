@@ -1,52 +1,81 @@
+#include "fd_reader.h"
 #include "tcp_comm_socket.h"
 
 #include <iostream>
 #include <lyra/lyra.hpp>
 #include <string>
+#include <thread>
 
-using comm_socket_type = Eventr::tcp_comm_socket<2048>;
-
-void on_receive(comm_socket_type &client, const comm_socket_type::buffer_type &buffer,
-                const ssize_t &size)
+class App
 {
-  static int  count = 5;
-  std::string data(buffer.data(), size);
-  std::cout << "received : " << data << std::endl;
+  using comm_socket_type = Eventr::tcp_comm_socket<2048>;
+  using reader_type      = Eventr::fd_reader<2048>;
 
-  try
+public:
+  void on_receive(const comm_socket_type::buffer_type &buffer, const ssize_t &size)
   {
-    client.send(buffer.data(), size);
-  }
-  catch (std::exception &e)
-  {
-    std::cout << "exception: " << e.what() << std::endl;
+    std::string data(buffer.data(), size);
+    std::cout << "received : " << data << std::endl;
   }
 
-  if (count-- == 0)
+  void on_error(const int &error)
   {
-    client.stop();
+    std::cout << "on_error: " << ::strerror(error) << std::endl;
   }
-}
 
-void on_receive_error(comm_socket_type &client, const int &error)
-{
-  std::cout << "on_receive_error: " << client << " error:" << ::strerror(error) << std::endl;
-}
+  void on_connect()
+  {
+    std::cout << "on_connect: " << client << std::endl;
+    client.set_on_receive(
+        std::bind(&App::on_receive, this, std::placeholders::_1, std::placeholders::_2));
+    client.set_on_error(std::bind(&App::on_error, this, std::placeholders::_1));
+    client.start();
+  }
 
-void on_connect_error(comm_socket_type &client, const int &error)
-{
-  std::cout << "on_connect_error: " << client << " error:" << ::strerror(error) << std::endl;
-}
+  void on_connect_error(const int &error)
+  {
+    std::cout << "on_connect_error: " << client << " error:" << ::strerror(error) << std::endl;
+  }
 
-void on_connect(comm_socket_type &client)
-{
-  std::cout << "on_connect: " << client << std::endl;
-  client.set_on_receive(
-      std::bind(on_receive, std::ref(client), std::placeholders::_1, std::placeholders::_2));
-  client.set_on_error(std::bind(on_receive_error, std::ref(client), std::placeholders::_1));
-  client.start();
-}
+  void on_read(const reader_type::buffer_type &buffer, const size_t &size)
+  {
+    std::string data(buffer.data(), size);
+    std::cout << "read : " << data << std::endl;
 
+    if (data == "connect")
+    {
+      client.connect(server_ip, server_port);
+    }
+    else
+    {
+      client.send(buffer.data(), size);
+    }
+  }
+
+  App(Eventr::io_handler &io, const std::string &server_ip, const uint32_t &server_port)
+    : client(io)
+    , reader(io, STDERR_FILENO)
+    , server_ip(server_ip)
+    , server_port(server_port)
+  {}
+
+  void init()
+  {
+    client.set_on_connect(std::bind(&App::on_connect, this));
+    client.set_on_error(std::bind(&App::on_connect_error, this, std::placeholders::_1));
+
+    client.start();
+
+    reader.set_cb(std::bind(&App::on_read, this, std::placeholders::_1, std::placeholders::_2));
+    reader.start();
+  }
+
+private:
+  comm_socket_type client;
+  reader_type      reader;
+  std::string      server_ip;
+  uint32_t         server_port;
+};
 
 int main(int argc, char *argv[])
 {
@@ -66,17 +95,11 @@ int main(int argc, char *argv[])
   }
 
   Eventr::io_handler io(10);
-  comm_socket_type   client(io);
+  App                app(io, server_ip, server_port);
+  app.init();
 
   try
   {
-    client.set_on_connect(std::bind(on_connect, std::ref(client)));
-    client.set_on_error(std::bind(on_connect_error, std::ref(client), std::placeholders::_1));
-
-    client.start();
-
-    client.connect(server_ip, server_port);
-
     io.run();
   }
   catch (std::exception &e)

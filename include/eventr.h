@@ -3,7 +3,7 @@
 
 #include <cerrno>
 #include <functional>
-// #include <iostream>
+#include <iostream>
 #include <stdexcept>
 #include <string.h>
 #include <sys/epoll.h>
@@ -53,7 +53,7 @@ public:
 
     std::tie(it, inserted) = _event_list.emplace(fd, event_data{fd, success_cb, error_cb});
 
-    // std::cout << "adding: " << fd << " inserted:" << inserted << std::endl;
+    std::cout << "adding: " << fd << " inserted:" << inserted << std::endl;
 
     if (inserted == true)
     {
@@ -76,7 +76,7 @@ public:
 
   void remove(int fd)
   {
-    // std::cout << "removing: " << fd << std::endl;
+    std::cout << "removing: " << fd << std::endl;
 
     if (_event_list.find(fd) != _event_list.end())
     {
@@ -104,6 +104,10 @@ public:
     {
       event_data *data = (event_data *)_epoll_list[count].data.ptr;
 
+      std::cout << "events: " << std::hex << _epoll_list[count].events << std::endl;
+      // std::cout << "EPOLLERR: " << std::hex << (_epoll_list[count].events & EPOLLERR) << std::endl;
+      // std::cout << "EPOLLHUP: " << std::hex << (_epoll_list[count].events & EPOLLHUP) << std::endl;
+
       if ((_epoll_list[count].events & EPOLLERR) || (_epoll_list[count].events & EPOLLHUP) ||
           (!(_epoll_list[count].events & EPOLLIN)))
       {
@@ -111,13 +115,20 @@ public:
         socklen_t result_len = sizeof(result);
         if (getsockopt(data->fd, SOL_SOCKET, SO_ERROR, &result, &result_len) >= 0)
         {
+          std::cout << "calling error cb" << std::endl;
           data->error_cb(result);
         }
-        continue;
+        // TODO(waqqas): Handle else
       }
-      // std::cout << "calling success cb" << std::endl;
-
-      data->success_cb();
+      else
+      {
+        std::cout << "calling success cb" << std::endl;
+        data->success_cb();
+      }
+      // else
+      // {
+      //   std::cout << "unhandled event: " << _epoll_list[count].events << std::endl;
+      // }
     }
   }
 

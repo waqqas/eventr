@@ -43,9 +43,15 @@ public:
       }
     }
   }
-  void on_receive_error(const int id, const int &error)
+  void on_error(const int id, const int &error)
   {
-    std::cout << "on_receive_error: " << id << " error: " << ::strerror(error) << std::endl;
+    std::cout << "on_error: " << id << " error: " << ::strerror(error) << std::endl;
+
+    auto it = client_list.find(id);
+    if (it != client_list.end())
+    {
+        client_list.erase(it);
+    }    
   }
 
   void on_accept(comm_socket_type &comm_socket)
@@ -64,7 +70,7 @@ public:
       it->second.socket->set_on_receive(std::bind(&App::on_receive, this, it->second.socket->id(),
                                                   std::placeholders::_1, std::placeholders::_2));
       it->second.socket->set_on_error(
-          std::bind(&App::on_receive_error, this, it->second.socket->id(), std::placeholders::_1));
+          std::bind(&App::on_error, this, it->second.socket->id(), std::placeholders::_1));
 
       it->second.socket->start();
     }
@@ -75,7 +81,7 @@ public:
     std::cout << "on_accept_error: " << ::strerror(error) << std::endl;
   }
 
-  void on_read(reader_type::buffer_type buffer, const size_t &size)
+  void on_read(const reader_type::buffer_type& buffer, const size_t &size)
   {
     static int  count = 5;
     std::string data(buffer.data(), size);

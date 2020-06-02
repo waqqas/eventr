@@ -106,7 +106,7 @@ public:
     }
   }
 
-  void mark_as_connected()
+  void mark_as_connected() noexcept
   {
     _isConnected = true;
   }
@@ -186,14 +186,20 @@ private:
     }
     else
     {
+      // int       error;
+      // socklen_t result_len = sizeof(error);
+      // if (getsockopt(_fd, SOL_SOCKET, SO_ERROR, &error, &result_len) >= 0)
+      // {
+      //   _error_cb(error);
+      // }
       _error_cb(errno);
     }
   }
 
-  void on_error(const int& error)
+  void on_error(const int &error)
   {
-    _io.remove(_fd);
     _error_cb(error);
+    _io.remove(_fd);
   }
 
   void on_connect()
