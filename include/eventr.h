@@ -56,13 +56,13 @@ public:
 
     // std::cout << "adding: " << fd << " inserted:" << inserted << std::endl;
 
+    epoll_event ev;
+
+    ev.data.ptr = &(it->second);
+    ev.events   = events | EPOLLET;  // event might change for each invokation
+
     if (inserted == true)
     {
-      epoll_event ev;
-
-      ev.data.ptr = &(it->second);
-      ev.events   = events | EPOLLET;
-
       if (::epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1)
       {
         _event_list.erase(it);
@@ -72,6 +72,11 @@ public:
     else
     {
       it->second = {fd, success_cb, error_cb};
+      if (::epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1)
+      {
+        _event_list.erase(it);
+        throw std::runtime_error(::strerror(errno));
+      }
     }
   }
 
