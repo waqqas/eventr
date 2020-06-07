@@ -6,6 +6,8 @@
 #include <string>
 #include <thread>
 
+#define UNUSED(x) (void)(x)
+
 class App
 {
   using comm_socket_type = Eventr::tcp_comm_socket<2048>;
@@ -42,29 +44,21 @@ public:
     std::string data(buffer.data(), size);
     std::cout << "read : " << data << std::endl;
 
-    if (data == "connect")
-    {
-      client.connect(server_ip, server_port);
-    }
-    else
-    {
-      client.send(buffer.data(), size);
-    }
+    client.send(buffer.data(), size);
   }
 
-  App(Eventr::io_handler &io, const std::string &server_ip, const uint32_t &server_port)
+  App(Eventr::io_handler &io)
     : client(io)
     , reader(io, STDERR_FILENO)
-    , server_ip(server_ip)
-    , server_port(server_port)
   {}
 
-  void init()
+  void init(const std::string &server_ip, const uint32_t &server_port)
   {
     client.set_on_connect(std::bind(&App::on_connect, this));
     client.set_on_error(std::bind(&App::on_connect_error, this, std::placeholders::_1));
 
     client.start();
+    client.connect(server_ip, server_port);
 
     reader.set_cb(std::bind(&App::on_read, this, std::placeholders::_1, std::placeholders::_2));
     reader.start();
@@ -73,8 +67,6 @@ public:
 private:
   comm_socket_type client;
   reader_type      reader;
-  std::string      server_ip;
-  uint32_t         server_port;
 };
 
 int main(int argc, char *argv[])
@@ -95,8 +87,8 @@ int main(int argc, char *argv[])
   }
 
   Eventr::io_handler io(10);
-  App                app(io, server_ip, server_port);
-  app.init();
+  App                app(io);
+  app.init(server_ip, server_port);
 
   try
   {

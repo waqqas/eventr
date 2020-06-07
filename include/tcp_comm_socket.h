@@ -93,16 +93,17 @@ public:
 
   void start()
   {
-    // std::cout << "start: " << _fd << " connected :" << _isConnected << std::endl;
+    std::cout << "start: " << _fd << " connected :" << _isConnected << std::endl;
     if (_isConnected == false)
     {
+      // wait for socket to become writable, which shows that client is connected
       _io.add(_fd, std::bind(&tcp_comm_socket<SIZE>::on_connect, this),
-              std::bind(&tcp_comm_socket<SIZE>::on_error, this, std::placeholders::_1));
+              std::bind(&tcp_comm_socket<SIZE>::on_error, this), EPOLLOUT);
     }
     else
     {
       _io.add(_fd, std::bind(&tcp_comm_socket<SIZE>::on_receive, this),
-              std::bind(&tcp_comm_socket<SIZE>::on_error, this, std::placeholders::_1));
+              std::bind(&tcp_comm_socket<SIZE>::on_error, this));
     }
   }
 
@@ -140,6 +141,10 @@ public:
       {
         throw std::runtime_error(::strerror(errno));
       }
+    }
+    else
+    {
+      on_connect();
     }
   }
 
@@ -186,20 +191,18 @@ private:
     }
     else
     {
-      // int       error;
-      // socklen_t result_len = sizeof(error);
-      // if (getsockopt(_fd, SOL_SOCKET, SO_ERROR, &error, &result_len) >= 0)
-      // {
-      //   _error_cb(error);
-      // }
-      _error_cb(errno);
+      on_error();
     }
   }
 
-  void on_error(const int &error)
+  void on_error()
   {
-    _error_cb(error);
-    _io.remove(_fd);
+    int       error;
+    socklen_t result_len = sizeof(error);
+    if (getsockopt(_fd, SOL_SOCKET, SO_ERROR, &error, &result_len) >= 0)
+    {
+      _error_cb(error);
+    }
   }
 
   void on_connect()
