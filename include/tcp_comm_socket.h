@@ -80,7 +80,6 @@ public:
   {
     if (_fd > -1)
     {
-      std::cout << "COMM closed: " << _fd << std::endl;
       stop();
       ::close(_fd);
     }

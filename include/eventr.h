@@ -97,10 +97,15 @@ public:
 
   void run()
   {
-    while (!_event_list.empty())
+    while (is_pollable())
     {
       poll();
     }
+  }
+
+  inline bool is_pollable()
+  {
+    return !_event_list.empty();
   }
 
   void poll()
