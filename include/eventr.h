@@ -3,7 +3,7 @@
 
 #include <cerrno>
 #include <functional>
-// #include <iostream>
+#include <iostream>
 #include <stdexcept>
 #include <string.h>
 #include <sys/epoll.h>
@@ -18,7 +18,7 @@ class io_handler
 {
 private:
   using event_success_cb_type = std::function<void(void)>;
-  using event_error_cb_type   = std::function<void(const int &)>;
+  using event_error_cb_type   = std::function<void(void)>;
 
   struct event_data
   {
@@ -46,7 +46,8 @@ public:
     close();
   }
 
-  void add(int fd, const event_success_cb_type &success_cb, const event_error_cb_type &error_cb)
+  void add(int fd, const event_success_cb_type &success_cb, const event_error_cb_type &error_cb,
+           const uint32_t events = EPOLLIN)
   {
     event_data_list_type::iterator it;
     bool                           inserted = false;
@@ -55,13 +56,13 @@ public:
 
     // std::cout << "adding: " << fd << " inserted:" << inserted << std::endl;
 
+    epoll_event ev;
+
+    ev.data.ptr = &(it->second);
+    ev.events   = events | EPOLLET;  // event might change for each invokation
+
     if (inserted == true)
     {
-      epoll_event ev;
-
-      ev.data.ptr = &(it->second);
-      ev.events   = EPOLLIN | EPOLLET;
-
       if (::epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1)
       {
         _event_list.erase(it);
@@ -71,6 +72,11 @@ public:
     else
     {
       it->second = {fd, success_cb, error_cb};
+      if (::epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1)
+      {
+        _event_list.erase(it);
+        throw std::runtime_error(::strerror(errno));
+      }
     }
   }
 
@@ -105,19 +111,15 @@ public:
       event_data *data = (event_data *)_epoll_list[count].data.ptr;
 
       if ((_epoll_list[count].events & EPOLLERR) || (_epoll_list[count].events & EPOLLHUP) ||
-          (!(_epoll_list[count].events & EPOLLIN)))
+          !((_epoll_list[count].events & EPOLLIN) || (_epoll_list[count].events & EPOLLOUT)))
       {
-        int       result;
-        socklen_t result_len = sizeof(result);
-        if (getsockopt(data->fd, SOL_SOCKET, SO_ERROR, &result, &result_len) >= 0)
-        {
-          data->error_cb(result);
-        }
-        continue;
+        data->error_cb();
       }
-      // std::cout << "calling success cb" << std::endl;
-
-      data->success_cb();
+      else
+      {
+        // std::cout << "calling success cb" << std::endl;
+        data->success_cb();
+      }
     }
   }
 
