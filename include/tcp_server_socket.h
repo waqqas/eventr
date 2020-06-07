@@ -48,8 +48,6 @@ public:
 
   ~tcp_server_socket()
   {
-    std::cout << "~tcp_server_socket: " << _fd << std::endl;
-
     ::close(_fd);
   }
 

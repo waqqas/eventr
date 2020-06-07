@@ -2,11 +2,13 @@
 #include "tcp_comm_socket.h"
 #include "tcp_server_socket.h"
 
+#include <csignal>
 #include <functional>
 #include <iostream>
 #include <lyra/lyra.hpp>
 #include <memory>
 #include <tuple>
+#include <unistd.h>
 #include <unordered_map>
 #include <utility>
 
@@ -50,8 +52,8 @@ public:
     auto it = client_list.find(id);
     if (it != client_list.end())
     {
-        client_list.erase(it);
-    }    
+      client_list.erase(it);
+    }
   }
 
   void on_accept(comm_socket_type &comm_socket)
@@ -81,28 +83,35 @@ public:
     std::cout << "on_accept_error: " << ::strerror(error) << std::endl;
   }
 
-  void on_read(const reader_type::buffer_type& buffer, const size_t &size)
+  void on_read(const reader_type::buffer_type &buffer, const size_t &size)
   {
     static int  count = 5;
     std::string data(buffer.data(), size);
     std::cout << "read : " << data << std::endl;
 
-    for (auto &client : client_list)
+    if (data == "exit\n")
     {
-      std::cout << "sending on: " << client.second.socket->id() << std::endl;
-      try
-      {
-        client.second.socket->send(buffer.data(), size);
-      }
-      catch (std::exception &e)
-      {
-        std::cout << "send exception: " << e.what() << std::endl;
-      }
+      deinit();
     }
-
-    if (count-- == 0)
+    else
     {
-      reader.stop();
+      for (auto &client : client_list)
+      {
+        std::cout << "sending on: " << client.second.socket->id() << std::endl;
+        try
+        {
+          client.second.socket->send(buffer.data(), size);
+        }
+        catch (std::exception &e)
+        {
+          std::cout << "send exception: " << e.what() << std::endl;
+        }
+      }
+
+      if (count-- == 0)
+      {
+        reader.stop();
+      }
     }
   }
 
@@ -123,11 +132,26 @@ public:
     reader.start();
   }
 
+  void deinit()
+  {
+    reader.stop();
+    server.stop();
+  }
+
 private:
   server_socket_type server;
   reader_type        reader;
   client_list_type   client_list;
 };
+
+namespace {
+volatile std::sig_atomic_t g_signal_status;
+}
+
+void handler(int sig)
+{
+  g_signal_status = sig;
+}
 
 int main(int argc, char *argv[])
 {
@@ -149,9 +173,14 @@ int main(int argc, char *argv[])
   Eventr::io_handler io(10);
   App                app(io);
 
+  std::signal(SIGINT, handler);
+
   app.init(server_ip, server_port);
 
-  io.run();
+  while (io.is_pollable() && g_signal_status == 0)
+  {
+    io.poll();
+  }
 
   std::cout << "app exiting" << std::endl;
 
