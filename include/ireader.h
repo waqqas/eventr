@@ -1,5 +1,5 @@
-#ifndef IREADER_H
-#define IREADER_H
+#ifndef EVENTR_IREADER_H
+#define EVENTR_IREADER_H
 
 #include <array>
 #include <functional>

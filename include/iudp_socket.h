@@ -1,5 +1,5 @@
-#ifndef IUDP_SOCKET_H
-#define IUPD_SOCKET_H
+#ifndef EVENTR_IUDP_SOCKET_H
+#define EVENTR_IUDP_SOCKET_H
 
 #include <array>
 #include <functional>

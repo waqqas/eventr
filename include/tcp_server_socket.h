@@ -1,5 +1,5 @@
-#ifndef TCP_SERVER_SOCKET_H
-#define TCP_SERVER_SOCKET_H
+#ifndef EVENTR_TCP_SERVER_SOCKET_H
+#define EVENTR_TCP_SERVER_SOCKET_H
 
 #include "eventr.h"
 #include "tcp_comm_socket.h"
@@ -48,6 +48,8 @@ public:
 
   ~tcp_server_socket()
   {
+    std::cout << "~tcp_server_socket: " << _fd << std::endl;
+
     ::close(_fd);
   }
 

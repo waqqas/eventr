@@ -1,5 +1,5 @@
-#ifndef UDP_RECEIVER_H
-#define UDP_RECEIVER_H
+#ifndef EVENTR_UDP_RECEIVER_H
+#define EVENTR_UDP_RECEIVER_H
 
 #include "eventr.h"
 #include "iudp_socket.h"

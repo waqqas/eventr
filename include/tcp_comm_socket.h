@@ -1,5 +1,5 @@
-#ifndef TCP_COMM_SOCKET_H
-#define TCP_COMM_SOCKET_H
+#ifndef EVENTR_TCP_COMM_SOCKET_H
+#define EVENTR_TCP_COMM_SOCKET_H
 
 #include "eventr.h"
 #include "itcp_socket.h"
@@ -80,7 +80,7 @@ public:
   {
     if (_fd > -1)
     {
-      // std::cout << "COMM closed: " << _fd << std::endl;
+      std::cout << "COMM closed: " << _fd << std::endl;
       stop();
       ::close(_fd);
     }
@@ -93,7 +93,7 @@ public:
 
   void start()
   {
-    std::cout << "start: " << _fd << " connected :" << _isConnected << std::endl;
+    // std::cout << "start: " << _fd << " connected :" << _isConnected << std::endl;
     if (_isConnected == false)
     {
       // wait for socket to become writable, which shows that client is connected

@@ -1,5 +1,5 @@
-#ifndef fd_reader_H
-#define fd_reader_H
+#ifndef EVENTR_FD_READER_H
+#define EVENTR_FD_READER_H
 
 #include "eventr.h"
 #include "ireader.h"

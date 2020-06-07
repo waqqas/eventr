@@ -1,5 +1,5 @@
-#ifndef ITIMER_H
-#define ITIMER_H
+#ifndef EVENTR_ITIMER_H
+#define EVENTR_ITIMER_H
 
 #include <functional>
 #include <sys/timerfd.h>
