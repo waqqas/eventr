@@ -16,6 +16,8 @@
 #include <unistd.h>
 #include <unordered_map>
 
+#include "iio_handler.h"
+
 namespace Eventr {
 
 class io_handler : public iio_handler
