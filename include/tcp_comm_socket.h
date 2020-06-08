@@ -1,7 +1,7 @@
 #ifndef EVENTR_TCP_COMM_SOCKET_H
 #define EVENTR_TCP_COMM_SOCKET_H
 
-#include "eventr.h"
+#include "io_handler.h"
 #include "itcp_socket.h"
 
 #include <arpa/inet.h>
