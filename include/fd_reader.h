@@ -1,7 +1,7 @@
 #ifndef EVENTR_FD_READER_H
 #define EVENTR_FD_READER_H
 
-#include "eventr.h"
+#include "io_handler.h"
 #include "ireader.h"
 
 namespace Eventr {

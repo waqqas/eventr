@@ -1,8 +1,7 @@
-#ifndef EVENTR_H
-#define EVENTR_H
+#ifndef EVENTR_IO_HANDLER_H
+#define EVENTR_IO_HANDLER_H
 
 #include <cerrno>
-#include <functional>
 #include <iostream>
 #include <stdexcept>
 #include <string.h>
@@ -12,13 +11,15 @@
 #include <unistd.h>
 #include <unordered_map>
 
+#include "iio_handler.h"
+
 namespace Eventr {
 
-class io_handler
+class io_handler: public iio_handler
 {
 private:
-  using event_success_cb_type = std::function<void(void)>;
-  using event_error_cb_type   = std::function<void(void)>;
+  using event_success_cb_type     = typename iio_handler::event_success_cb_type;
+  using event_error_cb_type     = typename iio_handler::event_error_cb_type;
 
   struct event_data
   {
@@ -47,7 +48,7 @@ public:
   }
 
   void add(int fd, const event_success_cb_type &success_cb, const event_error_cb_type &error_cb,
-           const uint32_t events = EPOLLIN)
+           const uint32_t events = EPOLLIN) override
   {
     event_data_list_type::iterator it;
     bool                           inserted = false;
@@ -80,7 +81,7 @@ public:
     }
   }
 
-  void remove(int fd)
+  void remove(int fd) override
   {
     // std::cout << "removing: " << fd << std::endl;
 
@@ -95,7 +96,7 @@ public:
     }
   }
 
-  void run()
+  void run() override
   {
     while (is_pollable())
     {
@@ -103,12 +104,12 @@ public:
     }
   }
 
-  inline bool is_pollable()
+  inline bool is_pollable() override
   {
     return !_event_list.empty();
   }
 
-  void poll()
+  void poll() override
   {
     int event_count = ::epoll_wait(_epoll_fd, &_epoll_list[0], _epoll_list.size(), -1);
     for (int count = 0; count < event_count; count++)

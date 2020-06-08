@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "eventr.h"
+#include "io_handler.h"
 
 SCENARIO("Initialization", "[lib][init]")
 {

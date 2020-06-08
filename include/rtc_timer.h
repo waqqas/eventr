@@ -1,7 +1,7 @@
 #ifndef EVENTR_RTC_TIMER_H
 #define EVENTR_RTC_TIMER_H
 
-#include "eventr.h"
+#include "io_handler.h"
 #include "itimer.h"
 
 namespace Eventr {
