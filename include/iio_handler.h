@@ -13,11 +13,11 @@ public:
   using event_error_cb_type   = std::function<void(void)>;
 
   virtual void add(int fd, const event_success_cb_type &success_cb,
-                   const event_error_cb_type &error_cb, const uint32_t events = EPOLLIN) = 0;
-  virtual void remove(int fd)                                                            = 0;
-  virtual void run(void)                                                                 = 0;
-  virtual void poll(void)                                                                = 0;
-  virtual bool is_pollable()                                                             = 0;
+                   const event_error_cb_type &error_cb, const uint32_t& events) = 0;
+  virtual void remove(int fd)                                                  = 0;
+  virtual void run(void)                                                       = 0;
+  virtual void poll(void)                                                      = 0;
+  virtual bool is_pollable(void)                                               = 0;
   virtual ~iio_handler()
   {}
 };

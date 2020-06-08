@@ -1,6 +1,8 @@
 #ifndef EVENTR_IO_HANDLER_H
 #define EVENTR_IO_HANDLER_H
 
+#include "iio_handler.h"
+
 #include <cerrno>
 #include <iostream>
 #include <stdexcept>
@@ -11,15 +13,13 @@
 #include <unistd.h>
 #include <unordered_map>
 
-#include "iio_handler.h"
-
 namespace Eventr {
 
-class io_handler: public iio_handler
+class io_handler : public iio_handler
 {
 private:
-  using event_success_cb_type     = typename iio_handler::event_success_cb_type;
-  using event_error_cb_type     = typename iio_handler::event_error_cb_type;
+  using event_success_cb_type = typename iio_handler::event_success_cb_type;
+  using event_error_cb_type   = typename iio_handler::event_error_cb_type;
 
   struct event_data
   {
@@ -48,7 +48,7 @@ public:
   }
 
   void add(int fd, const event_success_cb_type &success_cb, const event_error_cb_type &error_cb,
-           const uint32_t events = EPOLLIN) override
+           const uint32_t& events = EPOLLIN) override
   {
     event_data_list_type::iterator it;
     bool                           inserted = false;
@@ -104,7 +104,7 @@ public:
     }
   }
 
-  inline bool is_pollable() override
+  inline bool is_pollable(void) override
   {
     return !_event_list.empty();
   }
