@@ -58,8 +58,6 @@ public:
 
     std::tie(it, inserted) = _event_list.emplace(fd, event_data{fd, success_cb, error_cb});
 
-    // std::cout << "adding: " << fd << " inserted:" << inserted << std::endl;
-
     epoll_event ev;
 
     ev.data.ptr = &(it->second);
@@ -86,8 +84,6 @@ public:
 
   void remove(int fd) override
   {
-    // std::cout << "removing: " << fd << std::endl;
-
     if (_event_list.find(fd) != _event_list.end())
     {
       _event_list.erase(fd);
@@ -126,7 +122,6 @@ public:
       }
       else
       {
-        // std::cout << "calling success cb" << std::endl;
         data->success_cb();
       }
     }

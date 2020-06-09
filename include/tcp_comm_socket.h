@@ -36,8 +36,6 @@ public:
       _fd = ::socket(AF_INET, SOCK_STREAM, 0);
     }
 
-    // std::cout << "COMM opened: " << _fd << std::endl;
-
     if (_fd == -1)
     {
       throw std::runtime_error(::strerror(errno));
@@ -95,7 +93,6 @@ public:
 
   void start()
   {
-    // std::cout << "start: " << _fd << " connected :" << _isConnected << std::endl;
     if (_isConnected == false)
     {
       // wait for socket to become writable, which shows that client is connected
@@ -186,7 +183,7 @@ private:
   void on_receive()
   {
     ssize_t bytes_received = ::recv(_fd, _recv_buffer.data(), SIZE, 0);
-    // std::cout << "receveied: (" << bytes_received << ") " << std::endl;
+
     if (bytes_received > 0)
     {
       _receive_cb(_recv_buffer, bytes_received);
