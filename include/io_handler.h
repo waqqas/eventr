@@ -7,9 +7,9 @@
 #include "iio_handler.h"
 
 #include <cerrno>
+#include <cstring>
 #include <iostream>
 #include <stdexcept>
-#include <string.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <tuple>
@@ -51,7 +51,7 @@ public:
   }
 
   void add(int fd, const event_success_cb_type &success_cb, const event_error_cb_type &error_cb,
-           const uint32_t& events = EPOLLIN) override
+           const uint32_t &events = EPOLLIN) override
   {
     event_data_list_type::iterator it;
     bool                           inserted = false;

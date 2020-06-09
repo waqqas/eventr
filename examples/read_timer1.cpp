@@ -3,6 +3,7 @@
 
 #include "fd_reader.h"
 #include "rtc_timer.h"
+#include "io_handler.h"
 
 #include <iostream>
 #include <lyra/lyra.hpp>

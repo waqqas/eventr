@@ -4,8 +4,12 @@
 #ifndef EVENTR_FD_READER_H
 #define EVENTR_FD_READER_H
 
-#include "io_handler.h"
+#include "iio_handler.h"
 #include "ireader.h"
+
+#include <cstring>
+#include <unistd.h>
+#include <sys/epoll.h>
 
 namespace Eventr {
 template <size_t SIZE>
@@ -16,7 +20,7 @@ public:
   using read_cb_type = typename ireader<SIZE>::read_cb_type;
   using buffer_type  = typename ireader<SIZE>::buffer_type;
 
-  fd_reader(io_handler &io, int fd)
+  fd_reader(iio_handler &io, int fd)
     : io(io)
     , fd(fd)
   {}
@@ -29,7 +33,7 @@ public:
   void start() override
   {
     io.add(fd, std::bind(&fd_reader<SIZE>::on_read, this),
-           std::bind(&fd_reader<SIZE>::on_error, this));
+           std::bind(&fd_reader<SIZE>::on_error, this), EPOLLIN);
   }
 
   void stop() override
@@ -58,7 +62,7 @@ private:
   }
 
 private:
-  io_handler & io;
+  iio_handler &io;
   int          fd;
   read_cb_type cb;
   buffer_type  read_buffer;

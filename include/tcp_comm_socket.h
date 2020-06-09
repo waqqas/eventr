@@ -4,7 +4,7 @@
 #ifndef EVENTR_TCP_COMM_SOCKET_H
 #define EVENTR_TCP_COMM_SOCKET_H
 
-#include "io_handler.h"
+#include "iio_handler.h"
 #include "itcp_socket.h"
 
 #include <arpa/inet.h>
@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <iostream>
 #include <netinet/in.h>
+#include <sys/epoll.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -25,7 +26,7 @@ public:
   using connect_cb_type = typename itcp_socket<SIZE>::connect_cb_type;
   using error_cb_type   = typename itcp_socket<SIZE>::error_cb_type;
 
-  tcp_comm_socket(io_handler &io, int fd = -1)
+  tcp_comm_socket(iio_handler &io, int fd = -1)
     : _io(io)
     , _fd(fd)
     , _isConnected(false)
@@ -102,7 +103,7 @@ public:
     else
     {
       _io.add(_fd, std::bind(&tcp_comm_socket<SIZE>::on_receive, this),
-              std::bind(&tcp_comm_socket<SIZE>::on_error, this));
+              std::bind(&tcp_comm_socket<SIZE>::on_error, this), EPOLLIN);
     }
   }
 
@@ -211,7 +212,7 @@ private:
   }
 
 private:
-  io_handler &    _io;
+  iio_handler &   _io;
   int             _fd;
   bool            _isConnected;
   receive_cb_type _receive_cb;

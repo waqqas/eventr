@@ -4,15 +4,19 @@
 #ifndef EVENTR_RTC_TIMER_H
 #define EVENTR_RTC_TIMER_H
 
-#include "io_handler.h"
+#include "iio_handler.h"
 #include "itimer.h"
+
+#include <sys/epoll.h>
+#include <unistd.h>
+#include <cstring>
 
 namespace Eventr {
 
 class rtc_timer : public itimer
 {
 public:
-  rtc_timer(io_handler &io)
+  rtc_timer(iio_handler &io)
     : io(io)
   {
     fd = ::timerfd_create(CLOCK_REALTIME, 0);
@@ -46,7 +50,8 @@ public:
 
   void start() override
   {
-    io.add(fd, std::bind(&rtc_timer::on_expiry, this), std::bind(&rtc_timer::on_error, this));
+    io.add(fd, std::bind(&rtc_timer::on_expiry, this), std::bind(&rtc_timer::on_error, this),
+           EPOLLIN);
   }
 
   void stop() override
@@ -80,7 +85,7 @@ private:
   }
 
 private:
-  io_handler &  io;
+  iio_handler & io;
   int           fd;
   timer_cb_type cb;
 };
