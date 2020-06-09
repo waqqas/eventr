@@ -1,3 +1,6 @@
+// Copyright 2020 - 2020, Waqqas Jabbar
+// SPDX-License-Identifier: BSD-3-Clause
+
 #ifndef EVENTR_RTC_TIMER_H
 #define EVENTR_RTC_TIMER_H
 
