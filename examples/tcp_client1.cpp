@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "fd_reader.h"
+#include "io_handler.h"
 #include "tcp_comm_socket.h"
 
 #include <iostream>

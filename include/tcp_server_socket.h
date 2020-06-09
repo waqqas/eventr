@@ -4,7 +4,7 @@
 #ifndef EVENTR_TCP_SERVER_SOCKET_H
 #define EVENTR_TCP_SERVER_SOCKET_H
 
-#include "io_handler.h"
+#include "iio_handler.h"
 #include "tcp_comm_socket.h"
 
 #include <arpa/inet.h>
@@ -26,7 +26,7 @@ public:
   using accept_cb_type   = std::function<void(comm_socket_type &)>;
   using error_cb_type    = std::function<void(const int)>;
 
-  tcp_server_socket(io_handler &io)
+  tcp_server_socket(iio_handler &io)
     : _io(io)
   {
     _fd = ::socket(AF_INET, SOCK_STREAM, 0);
@@ -62,7 +62,7 @@ public:
   void start()
   {
     _io.add(_fd, std::bind(&tcp_server_socket::on_accept, this),
-            std::bind(&tcp_server_socket::on_error, this));
+            std::bind(&tcp_server_socket::on_error, this), EPOLLIN);
   }
 
   void stop()
@@ -136,7 +136,7 @@ private:
   }
 
 private:
-  io_handler &   _io;
+  iio_handler &   _io;
   int            _fd;
   accept_cb_type _accept_cb;
   error_cb_type  _error_cb;

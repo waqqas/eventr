@@ -4,11 +4,13 @@
 #ifndef EVENTR_UDP_RECEIVER_H
 #define EVENTR_UDP_RECEIVER_H
 
-#include "io_handler.h"
+#include "iio_handler.h"
 #include "iudp_socket.h"
 
 #include <arpa/inet.h>
+#include <cstring>
 #include <fcntl.h>
+#include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -21,7 +23,7 @@ public:
   using buffer_type     = typename iudp_socket<SIZE>::buffer_type;
   using receive_cb_type = typename iudp_socket<SIZE>::receive_cb_type;
 
-  udp_socket(io_handler &io)
+  udp_socket(iio_handler &io)
     : io(io)
   {
     fd = ::socket(AF_INET, SOCK_DGRAM, 0);
@@ -52,7 +54,7 @@ public:
   void start()
   {
     io.add(fd, std::bind(&udp_socket<SIZE>::on_receive, this),
-           std::bind(&udp_socket<SIZE>::on_error, this));
+           std::bind(&udp_socket<SIZE>::on_error, this), EPOLLIN);
   }
 
   void stop()
@@ -113,7 +115,7 @@ private:
   }
 
 private:
-  io_handler &    io;
+  iio_handler &   io;
   int             fd;
   receive_cb_type cb;
   buffer_type     recv_buffer;

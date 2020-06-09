@@ -4,7 +4,7 @@
 #ifndef EVENTR_TCP_COMM_SOCKET_H
 #define EVENTR_TCP_COMM_SOCKET_H
 
-#include "io_handler.h"
+#include "iio_handler.h"
 #include "itcp_socket.h"
 
 #include <arpa/inet.h>
@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <iostream>
 #include <netinet/in.h>
+#include <sys/epoll.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -25,7 +26,7 @@ public:
   using connect_cb_type = typename itcp_socket<SIZE>::connect_cb_type;
   using error_cb_type   = typename itcp_socket<SIZE>::error_cb_type;
 
-  tcp_comm_socket(io_handler &io, int fd = -1)
+  tcp_comm_socket(iio_handler &io, int fd = -1)
     : _io(io)
     , _fd(fd)
     , _isConnected(false)
@@ -35,8 +36,6 @@ public:
     {
       _fd = ::socket(AF_INET, SOCK_STREAM, 0);
     }
-
-    // std::cout << "COMM opened: " << _fd << std::endl;
 
     if (_fd == -1)
     {
@@ -95,7 +94,6 @@ public:
 
   void start()
   {
-    // std::cout << "start: " << _fd << " connected :" << _isConnected << std::endl;
     if (_isConnected == false)
     {
       // wait for socket to become writable, which shows that client is connected
@@ -105,7 +103,7 @@ public:
     else
     {
       _io.add(_fd, std::bind(&tcp_comm_socket<SIZE>::on_receive, this),
-              std::bind(&tcp_comm_socket<SIZE>::on_error, this));
+              std::bind(&tcp_comm_socket<SIZE>::on_error, this), EPOLLIN);
     }
   }
 
@@ -186,7 +184,7 @@ private:
   void on_receive()
   {
     ssize_t bytes_received = ::recv(_fd, _recv_buffer.data(), SIZE, 0);
-    // std::cout << "receveied: (" << bytes_received << ") " << std::endl;
+
     if (bytes_received > 0)
     {
       _receive_cb(_recv_buffer, bytes_received);
@@ -214,7 +212,7 @@ private:
   }
 
 private:
-  io_handler &    _io;
+  iio_handler &   _io;
   int             _fd;
   bool            _isConnected;
   receive_cb_type _receive_cb;
