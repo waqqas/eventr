@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "fd_reader.h"
-#include "io_handler.h"
+#include "epoll_handler.h"
 
 #include <iostream>
 #include <string>
@@ -21,7 +21,7 @@ void on_read(reader_type &reader, reader_type::buffer_type buffer, const size_t 
 
 int main(void)
 {
-  Eventr::io_handler io(10);
+  Eventr::epoll_handler io(10);
   reader_type        reader(io, STDIN_FILENO);
 
   reader.set_cb(std::bind(on_read, std::ref(reader), std::placeholders::_1, std::placeholders::_2));

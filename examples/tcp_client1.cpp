@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "fd_reader.h"
-#include "io_handler.h"
+#include "epoll_handler.h"
 #include "tcp_comm_socket.h"
 
 #include <iostream>
@@ -51,7 +51,7 @@ public:
     client.send(buffer.data(), size);
   }
 
-  App(Eventr::io_handler &io)
+  App(Eventr::epoll_handler &io)
     : client(io)
     , reader(io, STDERR_FILENO)
   {}
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  Eventr::io_handler io(10);
+  Eventr::epoll_handler io(10);
   App                app(io);
   app.init(server_ip, server_port);
 
