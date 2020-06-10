@@ -89,10 +89,9 @@ project(tcp_client1)
 file(GLOB sources tcp_client1.cpp)
 add_executable(${PROJECT_NAME} ${sources})
 
-find_package( Threads )
 add_dependencies(${PROJECT_NAME} eventr)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_BINARY_DIR}/src/)
 target_include_directories(${PROJECT_NAME} PUBLIC ${VENDOR_SOURCE_DIR}/Lyra/include)
 
-target_link_libraries(${PROJECT_NAME} eventr Threads::Threads)
+target_link_libraries(${PROJECT_NAME} eventr)
