@@ -3,7 +3,7 @@
 
 #include "catch.hpp"
 
-#include "io_handler.h"
+#include "epoll_handler.h"
 
 SCENARIO("Initialization", "[lib][init]")
 {
@@ -11,7 +11,7 @@ SCENARIO("Initialization", "[lib][init]")
   {
     WHEN("")
     {
-      Eventr::io_handler io;
+      Eventr::epoll_handler io;
       THEN("")
       {
         io.run();

@@ -18,7 +18,7 @@
 
 namespace Eventr {
 
-class io_handler : public iio_handler
+class epoll_handler : public iio_handler
 {
 private:
   using event_success_cb_type = typename iio_handler::event_success_cb_type;
@@ -38,14 +38,14 @@ private:
   using epoll_list_data_size = epoll_list_type::size_type;
 
 public:
-  io_handler(epoll_list_data_size epoll_size = 1, event_data_size_type data_size = 0)
+  epoll_handler(epoll_list_data_size epoll_size = 1, event_data_size_type data_size = 0)
     : _event_list(data_size)
     , _epoll_list(epoll_size)
   {
     init();
   }
 
-  ~io_handler()
+  ~epoll_handler()
   {
     close();
   }

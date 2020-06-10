@@ -3,7 +3,7 @@
 
 #include "fd_reader.h"
 #include "rtc_timer.h"
-#include "io_handler.h"
+#include "epoll_handler.h"
 
 #include <iostream>
 #include <lyra/lyra.hpp>
@@ -38,7 +38,7 @@ void on_timer_expired(Eventr::rtc_timer &timer, time_t expiry)
 
 int main(int argc, char *argv[])
 {
-  Eventr::io_handler io(10);
+  Eventr::epoll_handler io(10);
   Eventr::rtc_timer  timer(io);
   reader_type        reader(io, STDIN_FILENO);
 
