@@ -95,14 +95,6 @@ public:
     }
   }
 
-  void run() override
-  {
-    while (is_pollable())
-    {
-      poll();
-    }
-  }
-
   inline bool is_pollable(void) override
   {
     return !_event_list.empty();

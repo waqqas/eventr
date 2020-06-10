@@ -4,13 +4,15 @@
 #include "catch.hpp"
 #include "epoll_handler.h"
 
-#include <iostream>
 #include <unistd.h>
 /*
-As a user of the library
+As a application that is using this library
 I want to be notified when an activity happens on an fd
 so that I can process the activity
 */
+
+// Error callback is called
+// Thread safety considerations
 
 SCENARIO("Run function returns immidiately if no fd to monitor", "[lib][epoll]")
 {
@@ -38,26 +40,32 @@ SCENARIO("Run function returns immidiately if no fd to monitor", "[lib][epoll]")
 
 SCENARIO("Run function blocks when there is atleast one fd to monitor", "[lib][epoll]")
 {
-  GIVEN("that when an fd is added to be monitored")
+  GIVEN("that an fd is added to be monitored")
   {
     Eventr::epoll_handler io;
     bool                  callback_called = false;
+    pthread_t             run_thread_id, callback_thread_id;
 
     // stdout is always writable
     io.add(
         STDOUT_FILENO,
         [&]() {
+          callback_called    = true;
+          callback_thread_id = pthread_self();
+
           io.remove(STDOUT_FILENO);
-          callback_called = true;
         },
         [&]() {}, EPOLLOUT);
     WHEN("run function is called")
     {
-      // ::write(STDIN_FILENO, "\n", 1);
-      THEN("it calls success callback")
+      THEN("it calls success callback, in the same thread")
       {
+        run_thread_id = pthread_self();
+
         io.run();
+
         REQUIRE(callback_called);
+        REQUIRE(pthread_equal(callback_thread_id, run_thread_id));
       }
     }
   }
