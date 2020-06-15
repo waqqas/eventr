@@ -13,6 +13,7 @@ so that I can process the activity
 
 // Error callback is called
 // Thread safety considerations
+// Calling add again, updates the callbacks
 
 SCENARIO("Run function returns immidiately if no fd to monitor", "[lib][epoll]")
 {
@@ -38,7 +39,7 @@ SCENARIO("Run function returns immidiately if no fd to monitor", "[lib][epoll]")
   }
 }
 
-SCENARIO("Run function blocks when there is atleast one fd to monitor", "[lib][epoll]")
+SCENARIO("Success callback is called", "[lib][epoll]")
 {
   GIVEN("that an fd is added to be monitored")
   {
@@ -59,6 +60,39 @@ SCENARIO("Run function blocks when there is atleast one fd to monitor", "[lib][e
     WHEN("run function is called")
     {
       THEN("it calls success callback, in the same thread")
+      {
+        run_thread_id = pthread_self();
+
+        io.run();
+
+        REQUIRE(callback_called);
+        REQUIRE(pthread_equal(callback_thread_id, run_thread_id));
+      }
+    }
+  }
+}
+
+SCENARIO("Error callback is called", "[lib][epoll]")
+{
+  GIVEN("that an fd is added to be monitored")
+  {
+    Eventr::epoll_handler io;
+    bool                  callback_called = false;
+    pthread_t             run_thread_id, callback_thread_id;
+
+    ::close(STDIN_FILENO);
+    io.add(
+        STDIN_FILENO, [&]() {},
+        [&]() {
+          callback_called    = true;
+          callback_thread_id = pthread_self();
+
+          io.remove(STDIN_FILENO);
+        },
+        EPOLLIN);
+    WHEN("run function is called")
+    {
+      THEN("it calls error callback, in the same thread")
       {
         run_thread_id = pthread_self();
 
