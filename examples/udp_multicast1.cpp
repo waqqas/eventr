@@ -56,13 +56,18 @@ int main(int argc, char *argv[])
     receiver.set_cb(std::bind(on_receive, std::ref(receiver), std::placeholders::_1,
                               std::placeholders::_2, std::placeholders::_3));
     receiver.bind(local_ip, port);
-    
+
     receiver.set_option(SO_REUSEADDR, 1U);
 
     ip_mreq mreq;
     mreq.imr_multiaddr.s_addr = inet_addr(multicast_group_ip.c_str());
     mreq.imr_interface.s_addr = htonl(INADDR_ANY);
     receiver.set_option(IP_ADD_MEMBERSHIP, mreq, IPPROTO_IP);
+
+    uint32_t reuse = 0;
+    receiver.get_option(SO_REUSEADDR, reuse);
+
+    std::cout << "Reuse address = " << reuse << std::endl;
 
     receiver.start();
 

@@ -96,9 +96,19 @@ public:
   }
 
   template <typename T>
-  void set_option(const int &option_name, const T& option_value, int level = SOL_SOCKET)
+  void set_option(const int &option_name, const T &option_value, int level = SOL_SOCKET)
   {
     if (::setsockopt(fd, level, option_name, (const void *)&option_value, sizeof(T)) < 0)
+    {
+      throw std::runtime_error(::strerror(errno));
+    }
+  }
+
+  template <typename T>
+  void get_option(const int &option_name, T &option_value, int level = SOL_SOCKET)
+  {
+    socklen_t option_len = sizeof(T);
+    if (::getsockopt(fd, level, option_name, (void *)&option_value, &option_len) < 0)
     {
       throw std::runtime_error(::strerror(errno));
     }
