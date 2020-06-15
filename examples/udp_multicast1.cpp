@@ -1,7 +1,7 @@
 // Copyright 2020 - 2020, Waqqas Jabbar
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "io_handler.h"
+#include "epoll_handler.h"
 #include "udp_socket.h"
 
 #include <iostream>
@@ -33,7 +33,7 @@ void on_receive(receiver_type &receiver, const receiver_type::buffer_type buffer
 
 int main(int argc, char *argv[])
 {
-  Eventr::io_handler io(10);
+  Eventr::epoll_handler io(10);
   receiver_type      receiver(io);
 
   uint32_t    port               = 5000;

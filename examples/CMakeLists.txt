@@ -94,7 +94,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_BINARY_DIR}/src/)
 target_include_directories(${PROJECT_NAME} PUBLIC ${VENDOR_SOURCE_DIR}/Lyra/include)
 
-target_link_libraries(${PROJECT_NAME} eventr Threads::Threads)
 target_link_libraries(${PROJECT_NAME} eventr)
 
 project(udp_multicast1)
