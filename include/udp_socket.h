@@ -24,18 +24,18 @@ public:
   using receive_cb_type = typename iudp_socket<SIZE>::receive_cb_type;
 
   udp_socket(iio_handler &io)
-    : io(io)
+    : _io(io)
   {
-    fd = ::socket(AF_INET, SOCK_DGRAM, 0);
+    _fd = ::socket(AF_INET, SOCK_DGRAM, 0);
 
     // make socket non-blocking
-    int flags = fcntl(fd, F_GETFL, 0);
+    int flags = fcntl(_fd, F_GETFL, 0);
     if (flags == -1)
     {
       throw std::runtime_error(::strerror(errno));
     }
     flags |= O_NONBLOCK;
-    if (fcntl(fd, F_SETFL, flags) == -1)
+    if (fcntl(_fd, F_SETFL, flags) == -1)
     {
       throw std::runtime_error(::strerror(errno));
     }
@@ -43,23 +43,23 @@ public:
 
   ~udp_socket()
   {
-    ::close(fd);
+    ::close(_fd);
   }
 
   void set_cb(const receive_cb_type &callback)
   {
-    cb = callback;
+    _cb = callback;
   }
 
   void start()
   {
-    io.add(fd, std::bind(&udp_socket<SIZE>::on_receive, this),
+    _io.add(_fd, std::bind(&udp_socket<SIZE>::on_receive, this),
            std::bind(&udp_socket<SIZE>::on_error, this), EPOLLIN);
   }
 
   void stop()
   {
-    io.remove(fd);
+    _io.remove(_fd);
   }
 
   void bind(const std::string &server_ip, const uint32_t &port)
@@ -68,7 +68,7 @@ public:
     server_addr.sin_family = AF_INET;
     server_addr.sin_port   = htons(port);
     inet_aton(server_ip.c_str(), &server_addr.sin_addr);
-    if (::bind(fd, (sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+    if (::bind(_fd, (sockaddr *)&server_addr, sizeof(server_addr)) < 0)
     {
       throw std::runtime_error(::strerror(errno));
     }
@@ -78,7 +78,7 @@ public:
   {
     socklen_t addr_length = sizeof(remote_addr);
 
-    if (::sendto(fd, payload, size, 0, (sockaddr *)&remote_addr, addr_length) < 0)
+    if (::sendto(_fd, payload, size, 0, (sockaddr *)&remote_addr, addr_length) < 0)
     {
       throw std::runtime_error(::strerror(errno));
     }
@@ -98,7 +98,7 @@ public:
   template <typename T>
   void set_option(const int &option_name, const T &option_value, int level = SOL_SOCKET)
   {
-    if (::setsockopt(fd, level, option_name, (const void *)&option_value, sizeof(T)) < 0)
+    if (::setsockopt(_fd, level, option_name, (const void *)&option_value, sizeof(T)) < 0)
     {
       throw std::runtime_error(::strerror(errno));
     }
@@ -108,7 +108,7 @@ public:
   void get_option(const int &option_name, T &option_value, int level = SOL_SOCKET)
   {
     socklen_t option_len = sizeof(T);
-    if (::getsockopt(fd, level, option_name, (void *)&option_value, &option_len) < 0)
+    if (::getsockopt(_fd, level, option_name, (void *)&option_value, &option_len) < 0)
     {
       throw std::runtime_error(::strerror(errno));
     }
@@ -121,23 +121,23 @@ private:
     socklen_t   add_len = sizeof(addr);
 
     size_t bytes_received =
-        ::recvfrom(fd, recv_buffer.data(), SIZE, 0, (sockaddr *)&addr, &add_len);
+        ::recvfrom(_fd, _recv_buffer.data(), SIZE, 0, (sockaddr *)&addr, &add_len);
     if (bytes_received > 0)
     {
-      cb(recv_buffer, bytes_received, addr);
+      _cb(_recv_buffer, bytes_received, addr);
     }
   }
 
   void on_error()
   {
-    io.remove(fd);
+    _io.remove(_fd);
   }
 
 private:
-  iio_handler &   io;
-  int             fd;
-  receive_cb_type cb;
-  buffer_type     recv_buffer;
+  iio_handler &   _io;
+  int             _fd;
+  receive_cb_type _cb;
+  buffer_type     _recv_buffer;
 };
 }  // namespace Eventr
 #endif

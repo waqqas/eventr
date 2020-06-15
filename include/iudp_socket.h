@@ -18,7 +18,7 @@ public:
   using receive_cb_type =
       std::function<void(const buffer_type &, const size_t &, const sockaddr_in &)>;
 
-  // virtual void set_cb(const receive_cb_type &)                         = 0;
+  virtual void set_cb(const receive_cb_type &)                         = 0;
   virtual void start()                                                 = 0;
   virtual void stop()                                                  = 0;
   virtual void bind(const std::string &, const uint32_t &)             = 0;
