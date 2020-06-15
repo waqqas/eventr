@@ -95,6 +95,15 @@ public:
     send(payload, size, remote_addr);
   }
 
+  template <typename T>
+  void set_option(const int &option_name, const T& option_value, int level = SOL_SOCKET)
+  {
+    if (::setsockopt(fd, level, option_name, (const void *)&option_value, sizeof(T)) < 0)
+    {
+      throw std::runtime_error(::strerror(errno));
+    }
+  }
+
 private:
   void on_receive()
   {
