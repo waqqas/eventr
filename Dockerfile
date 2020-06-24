@@ -18,4 +18,8 @@ RUN apt-get install netcat -y
 RUN apt-get install net-tools -y
 RUN apt-get install gdb gdbserver -y
 
+#install cmake version 3.17.3
+RUN apt-get install wget -y
+RUN wget -q https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3-Linux-x86_64.sh && sh cmake-3.17.3-Linux-x86_64.sh --skip-license --prefix=/usr
+
 WORKDIR /code
